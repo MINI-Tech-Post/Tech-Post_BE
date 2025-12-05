@@ -1,10 +1,14 @@
 name: Deploy Backend
 
-# 🚀 deploy 브랜치로 push될 때마다 CI/CD 자동 실행
+# 🚀 deploy 브랜치로 push될 때마다 CI/CD 자동 실행.
 on:
   push:
     branches:
       - deploy
+  workflow_dispatch: # GitHub UI에서 수동 실행 가능
+
+permissions:
+  contents: read
 
 jobs:
   build-and-deploy:
