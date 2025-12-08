@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.*;
  @version 1.0
  @since 2025-12-08
  @description 이 파일은 사용자 인증과 관련된 HTTP 요청을 받아 처리하는 REST 컨트롤러 클래스입니다.
- */@RestController
+ */
+@RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
@@ -25,6 +26,12 @@ public class AuthController {
 	public ResponseEntity<String> signup(@RequestBody SignupDto signupDto) {
 		authService.signup(signupDto);
 		return ResponseEntity.ok("회원가입 성공");
+	}
+
+	@PostMapping("/login")
+	public ResponseEntity<String> login(@RequestBody LoginDto loginDto, HttpServletResponse response) {
+		authService.login(loginDto, response);
+		return ResponseEntity.ok("로그인 성공");
 	}
 
 }
