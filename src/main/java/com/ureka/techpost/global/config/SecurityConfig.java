@@ -1,5 +1,6 @@
 package com.ureka.techpost.global.config;
 
+import com.ureka.techpost.domain.auth.handler.CustomLogoutHandler;
 import com.ureka.techpost.domain.auth.jwt.JwtAuthenticationFilter;
 import com.ureka.techpost.domain.auth.jwt.JwtUtil;
 import com.ureka.techpost.domain.auth.service.TokenService;
@@ -32,7 +33,7 @@ public class SecurityConfig {
 	private final JwtUtil jwtUtil;
 	private final UserRepository userRepository;
 	private final TokenService tokenService;
-//	private final CustomLogoutHandler customLogoutHandler;
+	private final CustomLogoutHandler customLogoutHandler;
 //	private final CustomOAuth2UserService customOAuth2UserService;
 //	private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
@@ -79,13 +80,14 @@ public class SecurityConfig {
 						.requestMatchers(WHITE_LIST).permitAll()
 						.anyRequest().permitAll()
 				)
-//				.logout(logout -> logout
-//						.logoutUrl("/api/auth/logout")
-//						.addLogoutHandler(customLogoutHandler)
-//						.logoutSuccessHandler((request, response, authentication) -> {
-//							response.setStatus(HttpServletResponse.SC_OK);
-//						}))
-//
+
+				.logout(logout -> logout
+						.logoutUrl("/api/auth/logout")
+						.addLogoutHandler(customLogoutHandler)
+						.logoutSuccessHandler((request, response, authentication) -> {
+							response.setStatus(HttpServletResponse.SC_OK);
+						}))
+
 				.addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userRepository, tokenService), UsernamePasswordAuthenticationFilter.class);
 
 

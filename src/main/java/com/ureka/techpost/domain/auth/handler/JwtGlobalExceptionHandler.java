@@ -1,6 +1,7 @@
-package com.ureka.techpost.domain.auth.exception;
+package com.ureka.techpost.domain.auth.handler;
 
 import com.ureka.techpost.domain.auth.dto.ErrorResponseDto;
+import com.ureka.techpost.domain.auth.exception.InvalidTokenException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
