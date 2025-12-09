@@ -21,6 +21,13 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
+/**
+ * @file OAuth2LoginSuccessHandler.java
+ @author 김동혁, 구본문
+ @version 1.0
+ @since 2025-12-09
+ @description 이 파일은 소셜 로그인 성공 로직을 수행하는 클래스입니다.
+ */
 @Component
 @RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
