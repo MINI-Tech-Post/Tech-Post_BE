@@ -8,6 +8,8 @@
 
 package com.ureka.techpost.domain.chat.entity;
 
+import com.ureka.techpost.domain.user.entity.User;
+import com.ureka.techpost.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -26,7 +28,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Getter
 @Entity
-public class ChatMessage {
+public class ChatMessage extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,9 +37,9 @@ public class ChatMessage {
     @JoinColumn(name = "chat_room_id", nullable = false)
     private ChatRoom chatRoom;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "member_id", nullable = false)
-//    private Member member;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    private User user;
 
     @Column(nullable = false, length = 500)
     private String content;

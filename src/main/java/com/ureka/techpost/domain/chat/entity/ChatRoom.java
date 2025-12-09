@@ -8,6 +8,7 @@
 
 package com.ureka.techpost.domain.chat.entity;
 
+import com.ureka.techpost.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Getter
 @Entity
-public class ChatRoom {
+public class ChatRoom extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

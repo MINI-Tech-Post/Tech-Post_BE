@@ -8,12 +8,18 @@
 
 package com.ureka.techpost.domain.chat.service;
 
+import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
 import com.ureka.techpost.domain.chat.dto.request.ChatMessageReq;
+import com.ureka.techpost.domain.chat.dto.response.ChatMessageRes;
 import com.ureka.techpost.domain.chat.dto.response.ChatRoomRes;
 import com.ureka.techpost.domain.chat.entity.ChatMessage;
+import com.ureka.techpost.domain.chat.entity.ChatParticipant;
 import com.ureka.techpost.domain.chat.entity.ChatRoom;
 import com.ureka.techpost.domain.chat.repository.ChatMessageRepository;
+import com.ureka.techpost.domain.chat.repository.ChatParticipantRepository;
 import com.ureka.techpost.domain.chat.repository.ChatRoomRepository;
+import com.ureka.techpost.domain.user.entity.User;
+import com.ureka.techpost.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
@@ -27,6 +33,8 @@ public class ChatService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ChatParticipantRepository chatParticipantRepository;
+    private final UserRepository userRepository;
 
     public List<ChatRoomRes> getChatRoomList() {
       List<ChatRoom> chatRoomList = chatRoomRepository.findAll();
@@ -39,19 +47,58 @@ public class ChatService {
     }
 
     @Transactional
-    public void saveMessage(Long roomId, Long userid, ChatMessageReq chatMessageReq) {
+    public void saveMessage(Long roomId, Long userId, ChatMessageReq chatMessageReq) {
       ChatRoom chatRoom = chatRoomRepository.findById(roomId)
           .orElseThrow(() -> new EntityNotFoundException("room cannot be found"));
 
-//      User sender = memberRepository.findById(userid)
-//          .orElseThrow(() -> new EntityNotFoundException("member cannot be found"));
+      User sender = userRepository.findById(userId)
+          .orElseThrow(() -> new EntityNotFoundException("user cannot be found"));
 
       ChatMessage chatMessage = ChatMessage.builder()
           .chatRoom(chatRoom)
-//          .member(sender)
+          .user(sender)
           .content(chatMessageReq.getMessage())
           .build();
 
       chatMessageRepository.save(chatMessage);
+    }
+
+    public void createGroupChatRoom(String roomName, CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getUserId();
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("user cannot be found"));
+
+        ChatRoom chatRoom = ChatRoom.builder()
+            .roomName(roomName)
+            .build();
+        chatRoomRepository.save(chatRoom);
+
+        ChatParticipant chatParticipant = ChatParticipant.builder()
+            .chatRoom(chatRoom)
+            .user(user)
+            .build();
+        chatParticipantRepository.save(chatParticipant);
+    }
+
+    public List<ChatMessageRes> getChatHistory(Long roomId, CustomUserDetails userDetails) {
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+            .orElseThrow(() -> new EntityNotFoundException("room cannot be found"));
+
+        Long userId = userDetails.getUser().getUserId();
+
+        boolean isParticipant = chatParticipantRepository.existsByChatRoom_IdAndUser_UserId(roomId, userId);
+        if(!isParticipant) throw new IllegalArgumentException("속하지 않은 채팅방입니다.");
+
+        List<ChatMessage> chatMessages = chatMessageRepository.findByChatRoomOrderByCreatedAtAsc(chatRoom);
+        List<ChatMessageRes> chatMessageResList = new ArrayList<>();
+
+        for (ChatMessage chatMessage : chatMessages) {
+            ChatMessageRes chatMessageRes = ChatMessageRes.builder()
+                .message(chatMessage.getContent())
+                .senderName(chatMessage.getUser().getName())
+                .build();
+            chatMessageResList.add(chatMessageRes);
+        }
+
+        return chatMessageResList;
     }
 }

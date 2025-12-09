@@ -8,12 +8,17 @@
 
 package com.ureka.techpost.domain.chat.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
 import com.ureka.techpost.domain.chat.dto.request.ChatMessageReq;
 import com.ureka.techpost.domain.chat.service.ChatService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
 @RequiredArgsConstructor
@@ -24,9 +29,10 @@ public class StompController {
     private final ChatService chatService;
 
     @MessageMapping("/{roomId}")
-    public void sendMessage(@DestinationVariable Long roomId, Long userid, ChatMessageReq chatMessageReq) {
-      chatService.saveMessage(roomId, userid, chatMessageReq);
-      chatService.saveMessage(roomId, userid, chatMessageReq);
+    public void sendMessage(@DestinationVariable Long roomId, @AuthenticationPrincipal CustomUserDetails userDetails, @Payload @Valid ChatMessageReq chatMessageReq) {
+      Long userId = userDetails.getUser().getUserId();
+
+      chatService.saveMessage(roomId, userId, chatMessageReq);
       messageTemplate.convertAndSend("/topic/" + roomId, chatMessageReq);
     }
 }
