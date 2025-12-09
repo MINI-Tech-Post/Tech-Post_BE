@@ -6,6 +6,7 @@ import com.ureka.techpost.domain.auth.service.AuthService;
 import com.ureka.techpost.global.apiPayload.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ public class AuthController {
 	private final AuthService authService;
 
 	@PostMapping("/signup")
-	public ApiResponse<String> signup(@RequestBody SignupDto signupDto) {
+	public ApiResponse<String> signup(@Valid @RequestBody SignupDto signupDto) {
 		authService.signup(signupDto);
 		return ApiResponse.onSuccess("회원가입 성공");
 	}
@@ -36,7 +37,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/login")
-	public ApiResponse<String> login(@RequestBody LoginDto loginDto, HttpServletResponse response) {
+	public ApiResponse<String> login(@Valid @RequestBody LoginDto loginDto, HttpServletResponse response) {
 		authService.login(loginDto, response);
 		return ApiResponse.onSuccess("로그인 성공");
 	}
