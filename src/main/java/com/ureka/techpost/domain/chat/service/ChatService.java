@@ -63,6 +63,7 @@ public class ChatService {
       chatMessageRepository.save(chatMessage);
     }
 
+    @Transactional
     public void createGroupChatRoom(String roomName, CustomUserDetails userDetails) {
         Long userId = userDetails.getUser().getUserId();
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("user cannot be found"));

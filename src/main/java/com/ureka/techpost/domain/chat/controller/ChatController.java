@@ -32,19 +32,19 @@ public class ChatController {
     }
 
     @PostMapping
-    public ApiResponse<Void> createGroupChatRoom(@RequestParam String roomName, @AuthenticationPrincipal CustomUserDetails userDetails){
+    public ApiResponse<Void> createGroupChatRoom(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestParam String roomName) {
         chatService.createGroupChatRoom(roomName, userDetails);
         return ApiResponse.onSuccess(null);
     }
 
     @GetMapping("/history/{roomId}")
-    public ApiResponse<List<ChatMessageRes>> getChatHistory(@PathVariable Long roomId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ApiResponse<List<ChatMessageRes>> getChatHistory(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long roomId) {
         return ApiResponse.onSuccess(chatService.getChatHistory(roomId, userDetails));
     }
 
     @GetMapping("/my")
-    public ApiResponse<List<ChatRoomRes>> getMyChatRoomList(@AuthenticationPrincipal CustomUserDetails UserDetail) {
-        return ApiResponse.onSuccess(chatService.getMyChatRoomList(UserDetail));
+    public ApiResponse<List<ChatRoomRes>> getMyChatRoomList(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ApiResponse.onSuccess(chatService.getMyChatRoomList(userDetails));
     }
 
     @PostMapping("/{roomId}/join")
