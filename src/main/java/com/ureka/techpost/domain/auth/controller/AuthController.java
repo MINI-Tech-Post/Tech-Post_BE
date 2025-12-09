@@ -3,6 +3,7 @@ package com.ureka.techpost.domain.auth.controller;
 import com.ureka.techpost.domain.auth.dto.LoginDto;
 import com.ureka.techpost.domain.auth.dto.SignupDto;
 import com.ureka.techpost.domain.auth.service.AuthService;
+import com.ureka.techpost.global.apiPayload.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,20 +25,20 @@ public class AuthController {
 	private final AuthService authService;
 
 	@PostMapping("/signup")
-	public ResponseEntity<String> signup(@RequestBody SignupDto signupDto) {
+	public ApiResponse<String> signup(@RequestBody SignupDto signupDto) {
 		authService.signup(signupDto);
-		return ResponseEntity.ok("회원가입 성공");
+		return ApiResponse.onSuccess("회원가입 성공");
 	}
 
 	@PostMapping("/reissue")
-	public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
-		return authService.reissue(request, response);
+	public ApiResponse<?> reissue(HttpServletRequest request, HttpServletResponse response) {
+		return ApiResponse.onSuccess(authService.reissue(request, response));
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<String> login(@RequestBody LoginDto loginDto, HttpServletResponse response) {
+	public ApiResponse<String> login(@RequestBody LoginDto loginDto, HttpServletResponse response) {
 		authService.login(loginDto, response);
-		return ResponseEntity.ok("로그인 성공");
+		return ApiResponse.onSuccess("로그인 성공");
 	}
 
 }
