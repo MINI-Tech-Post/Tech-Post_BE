@@ -21,7 +21,6 @@ import java.time.LocalDateTime;
 @Table(name = "post")
 @Getter
 @NoArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
 public class Post extends BaseEntity {
 
     @Id
