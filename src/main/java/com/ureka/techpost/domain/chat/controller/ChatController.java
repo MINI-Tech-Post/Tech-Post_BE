@@ -34,7 +34,7 @@ public class ChatController {
         return ApiResponse.onSuccess(chatService.getChatRoomList());
     }
 
-    @PostMapping("/room/group/create")
+    @PostMapping
     public ApiResponse<Void> createGroupChatRoom(@RequestParam String roomName, @AuthenticationPrincipal CustomUserDetails userDetails){
         chatService.createGroupChatRoom(roomName, userDetails);
         return ApiResponse.onSuccess(null);

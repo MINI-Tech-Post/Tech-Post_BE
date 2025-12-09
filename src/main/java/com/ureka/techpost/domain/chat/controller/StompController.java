@@ -29,7 +29,7 @@ public class StompController {
     private final ChatService chatService;
 
     @MessageMapping("/{roomId}")
-    public void sendMessage(@DestinationVariable Long roomId, @AuthenticationPrincipal CustomUserDetails userDetails, @Payload @Valid ChatMessageReq chatMessageReq) throws JsonProcessingException {
+    public void sendMessage(@DestinationVariable Long roomId, @AuthenticationPrincipal CustomUserDetails userDetails, @Payload @Valid ChatMessageReq chatMessageReq) {
       Long userId = userDetails.getUser().getUserId();
 
       chatService.saveMessage(roomId, userId, chatMessageReq);

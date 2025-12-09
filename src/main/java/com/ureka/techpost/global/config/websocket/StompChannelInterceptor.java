@@ -10,11 +10,9 @@ package com.ureka.techpost.global.config.websocket;
 
 import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
 import com.ureka.techpost.domain.auth.service.CustomUserDetailsService;
-import com.ureka.techpost.domain.chat.service.ChatService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +21,6 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -43,7 +40,6 @@ public class StompChannelInterceptor implements ChannelInterceptor {
       return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    private final ChatService chatService;
     private final CustomUserDetailsService userDetailsService;
 
     // connect, subscribe, disconnet 하기 전에 preSend()를 무조건 거친다
