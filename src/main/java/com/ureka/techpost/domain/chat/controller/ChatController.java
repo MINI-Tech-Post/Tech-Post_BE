@@ -14,7 +14,9 @@ import com.ureka.techpost.global.apiPayload.ApiResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -25,6 +27,12 @@ public class ChatController {
 
     @GetMapping
     public ApiResponse<List<ChatRoomRes>> getChatRoomList() {
-      return ApiResponse.onSuccess(chatService.getChatRoomList());
+        return ApiResponse.onSuccess(chatService.getChatRoomList());
+    }
+
+    @PostMapping("/room/group/create")
+    public ApiResponse<Void> createGroupChatRoom(@RequestParam String roomName){
+        chatService.createGroupChatRoom(roomName);
+        return ApiResponse.onSuccess(null);
     }
 }

@@ -8,7 +8,9 @@
 
 package com.ureka.techpost.global.config.websocket;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -16,13 +18,10 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 // STOMP 사용해 메시지 브로커 설정
 @Configuration
+@RequiredArgsConstructor
 @EnableWebSocketMessageBroker // STOMP 전용
 public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
-//    private final StompChannelInterceptor stompHandler;
-//
-//    public StompWebSocketConfig(StompChannelInterceptor stompHandler) {
-//        this.stompHandler = stompHandler;
-//    }
+    private final StompChannelInterceptor stompChannelInterceptor;
 
     // WebSocket 엔드포인트 등록 : 클라이언트가 연결할 수 있는 WebSocket 엔드포인트 정의
     @Override
@@ -31,7 +30,7 @@ public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/connect")
                 // 클라이언트의 origin을 명시적으로 지정
                  .setAllowedOrigins("http://localhost:3000")
-//                // WebSocket을 지원하지 않는 브라우저에서도 SockJS를 통해 WebSocket 기능 사용 가능하도록
+                // WebSocket을 지원하지 않는 브라우저에서도 SockJS를 통해 WebSocket 기능 사용 가능하도록
                 .withSockJS();
     }
 
@@ -46,10 +45,10 @@ public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker("/topic");
     }
 
-//    // 웹소켓 요청 (Connect, subscribe, disconnect) 등의 요청 시에는 http reader 등 http 메시지를 넣어올 수 있고,
-//    // 이를 interceptor를 통해 가로채 토큰 등을 검증할 수 있음
-//    @Override
-//    public void configureClientInboundChannel(ChannelRegistration registration) {
-//        registration.interceptors(stompHandler);
-//    }
+    // 웹소켓 요청 (Connect, subscribe, disconnect) 등의 요청 시에는 http reader 등 http 메시지를 넣어올 수 있고,
+    // 이를 interceptor를 통해 가로채 토큰 등을 검증할 수 있음
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(stompChannelInterceptor);
+    }
 }
