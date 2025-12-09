@@ -101,4 +101,11 @@ public class ChatService {
 
         return chatMessageResList;
     }
+
+    public List<ChatRoomRes> getMyChatRoomList(CustomUserDetails userDetails) {
+        return chatParticipantRepository.findAllWithChatRoomByUserId(userDetails.getUser().getUserId())
+                .stream()
+                .map(chatParticipant -> ChatRoomRes.from(chatParticipant.getChatRoom()))
+                .toList();
+    }
 }

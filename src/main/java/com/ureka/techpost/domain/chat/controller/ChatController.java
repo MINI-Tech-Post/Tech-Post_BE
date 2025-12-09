@@ -44,4 +44,9 @@ public class ChatController {
     public ApiResponse<List<ChatMessageRes>> getChatHistory(@PathVariable Long roomId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ApiResponse.onSuccess(chatService.getChatHistory(roomId, userDetails));
     }
+
+    @GetMapping("/my")
+    public ApiResponse<List<ChatRoomRes>> getMyChatRoomList(@AuthenticationPrincipal CustomUserDetails UserDetail) {
+        return ApiResponse.onSuccess(chatService.getMyChatRoomList(UserDetail));
+    }
 }
