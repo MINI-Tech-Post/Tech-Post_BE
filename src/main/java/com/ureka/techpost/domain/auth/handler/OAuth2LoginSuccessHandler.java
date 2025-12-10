@@ -40,18 +40,12 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         CustomUserDetails oAuth2User = (CustomUserDetails) authentication.getPrincipal();
 
-        String username = oAuth2User.getUsername();
-        Collection<? extends GrantedAuthority> authorities = oAuth2User.getAuthorities();
-        Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
-        GrantedAuthority auth = iterator.next();
-        String role = auth.getAuthority();
-
         // 우리 시스템의 JWT 토큰 생성
-        String access = jwtUtil.generateAccessToken("access", username, role);
+        String access = jwtUtil.generateAccessToken("access", oAuth2User.getUsername(), oAuth2User.getUser().getRoleName());
         String refresh = jwtUtil.generateRefreshToken("refresh");
 
         // 리프레시 토큰 저장 및 쿠키에 추가
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUsername(oAuth2User.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("해당하는 유저를 찾을 수 없습니다."));
         tokenService.addRefreshToken(user, refresh);
         response.addCookie(tokenService.createCookie("refresh", refresh));

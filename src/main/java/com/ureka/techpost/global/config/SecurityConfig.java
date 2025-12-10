@@ -1,18 +1,15 @@
 package com.ureka.techpost.global.config;
 
-import com.ureka.techpost.domain.auth.handler.CustomLogoutHandler;
 import com.ureka.techpost.domain.auth.handler.OAuth2LoginSuccessHandler;
 import com.ureka.techpost.domain.auth.jwt.JwtAuthenticationFilter;
 import com.ureka.techpost.domain.auth.jwt.JwtUtil;
 import com.ureka.techpost.domain.auth.service.CustomOAuth2UserService;
 import com.ureka.techpost.domain.auth.service.TokenService;
 import com.ureka.techpost.domain.user.repository.UserRepository;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -35,7 +32,6 @@ public class SecurityConfig {
 	private final JwtUtil jwtUtil;
 	private final UserRepository userRepository;
 	private final TokenService tokenService;
-	private final CustomLogoutHandler customLogoutHandler;
 	private final CustomOAuth2UserService customOAuth2UserService;
 	private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
@@ -89,13 +85,6 @@ public class SecurityConfig {
 								.userService(customOAuth2UserService))
 						.successHandler(oAuth2LoginSuccessHandler)
 				)
-
-				.logout(logout -> logout
-						.logoutUrl("/api/auth/logout")
-						.addLogoutHandler(customLogoutHandler)
-						.logoutSuccessHandler((request, response, authentication) -> {
-							response.setStatus(HttpServletResponse.SC_OK);
-						}))
 
 				.addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userRepository, tokenService), UsernamePasswordAuthenticationFilter.class);
 

@@ -27,39 +27,6 @@ public class TokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
 
-    // 로그아웃 처리
-    public void logout(HttpServletRequest request, HttpServletResponse response) {
-        String refresh = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("refresh")) {
-                    refresh = cookie.getValue();
-                    break;
-                }
-            }
-        }
-
-        // 토큰이 존재하면 검증 및 DB 삭제 시도
-        if (refresh != null) {
-            try {
-                // 토큰 검증 (만료, 위조, DB 존재 여부 확인)
-                validateRefreshToken(refresh);
-                // DB에서 Refresh 토큰 제거
-                deleteByTokenValue(refresh);
-            } catch (CustomException e) {
-                // 토큰이 유효하지 않거나(만료 등), 이미 DB에 없는 경우
-                // 로그아웃 과정이므로 무시하고 쿠키 삭제로 넘어감
-            }
-        }
-
-        // response에서 쿠키 제거 (항상 수행하여 클라이언트 상태 정리)
-        Cookie cookie = new Cookie("refresh", null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        response.addCookie(cookie);
-    }
-
     // DB에 Refresh 토큰 저장 (Redis)
     public void addRefreshToken(User user, String refresh) {
         // Redis에 저장할 객체 생성
