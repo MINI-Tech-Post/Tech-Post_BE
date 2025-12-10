@@ -63,6 +63,7 @@ public class ChatService {
       chatMessageRepository.save(chatMessage);
     }
 
+    @Transactional
     public void createGroupChatRoom(String roomName, CustomUserDetails userDetails) {
         Long userId = userDetails.getUser().getUserId();
         User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("user cannot be found"));
@@ -100,5 +101,41 @@ public class ChatService {
         }
 
         return chatMessageResList;
+    }
+
+    public List<ChatRoomRes> getMyChatRoomList(CustomUserDetails userDetails) {
+        return chatParticipantRepository.findAllWithChatRoomByUserId(userDetails.getUser().getUserId())
+                .stream()
+                .map(chatParticipant -> ChatRoomRes.from(chatParticipant.getChatRoom()))
+                .toList();
+    }
+
+    @Transactional
+    public void joinChatRoom(CustomUserDetails userDetails, Long roomId) {
+        User user = userRepository.findById(userDetails.getUser().getUserId())
+                .orElseThrow(() -> new EntityNotFoundException("user cannot be found"));
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new EntityNotFoundException("room cannot be found"));
+
+        if (chatParticipantRepository.existsByUserAndChatRoom(user, chatRoom))
+            throw new IllegalStateException("이미 참여 중인 채팅방입니다");
+
+        ChatParticipant chatParticipant = ChatParticipant.builder()
+                .chatRoom(chatRoom)
+                .user(user)
+                .build();
+        chatParticipantRepository.save(chatParticipant);
+    }
+
+    @Transactional
+    public void leaveChatRoom(CustomUserDetails userDetails, Long roomId) {
+        User user = userRepository.findById(userDetails.getUser().getUserId())
+                .orElseThrow(() -> new EntityNotFoundException("user cannot be found"));
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new EntityNotFoundException("room cannot be found"));
+        ChatParticipant chatParticipant = chatParticipantRepository.findByUserAndChatRoom(user, chatRoom)
+                .orElseThrow(() -> new EntityNotFoundException("chat participant cannot be found"));
+
+        chatParticipantRepository.delete(chatParticipant);
     }
 }

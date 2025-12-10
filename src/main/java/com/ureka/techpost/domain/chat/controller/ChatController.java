@@ -14,14 +14,11 @@ import com.ureka.techpost.domain.chat.dto.response.ChatRoomRes;
 import com.ureka.techpost.domain.chat.service.ChatService;
 import com.ureka.techpost.global.apiPayload.ApiResponse;
 import java.util.List;
+
+import com.ureka.techpost.global.apiPayload.code.BaseCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -35,13 +32,30 @@ public class ChatController {
     }
 
     @PostMapping
-    public ApiResponse<Void> createGroupChatRoom(@RequestParam String roomName, @AuthenticationPrincipal CustomUserDetails userDetails){
+    public ApiResponse<Void> createGroupChatRoom(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestParam String roomName) {
         chatService.createGroupChatRoom(roomName, userDetails);
         return ApiResponse.onSuccess(null);
     }
 
     @GetMapping("/history/{roomId}")
-    public ApiResponse<List<ChatMessageRes>> getChatHistory(@PathVariable Long roomId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ApiResponse<List<ChatMessageRes>> getChatHistory(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long roomId) {
         return ApiResponse.onSuccess(chatService.getChatHistory(roomId, userDetails));
+    }
+
+    @GetMapping("/my")
+    public ApiResponse<List<ChatRoomRes>> getMyChatRoomList(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ApiResponse.onSuccess(chatService.getMyChatRoomList(userDetails));
+    }
+
+    @PostMapping("/{roomId}/join")
+    public ApiResponse<Void> joinChatRoom(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long roomId) {
+        chatService.joinChatRoom(userDetails, roomId);
+        return ApiResponse.onSuccess(null);
+    }
+
+    @DeleteMapping("/{roomId}/leave")
+    public ApiResponse<Void> leaveChatRoom(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long roomId) {
+        chatService.leaveChatRoom(userDetails, roomId);
+        return ApiResponse.onSuccess(null);
     }
 }
