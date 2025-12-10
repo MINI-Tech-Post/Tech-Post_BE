@@ -15,7 +15,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CommentResponse {
+public class CommentResponseDTO {
     private Long id;
     private Long userId;
     private String userName;

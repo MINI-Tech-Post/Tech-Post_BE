@@ -2,8 +2,8 @@ package com.ureka.techpost.domain.comment.service;
 
 
 import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
-import com.ureka.techpost.domain.comment.dto.CommentRequest;
-import com.ureka.techpost.domain.comment.dto.CommentResponse;
+import com.ureka.techpost.domain.comment.dto.CommentRequestDTO;
+import com.ureka.techpost.domain.comment.dto.CommentResponseDTO;
 import com.ureka.techpost.domain.comment.entity.Comment;
 import com.ureka.techpost.domain.comment.repository.CommentRepository;
 import com.ureka.techpost.domain.post.entity.Post;
@@ -36,7 +36,7 @@ public class CommentService {
     private final PostRepository postRepository;
 
     @Transactional
-    public void addComment(CommentRequest commentRequest, CustomUserDetails userDetails, Long postId){
+    public void createComment(CommentRequestDTO commentRequestDTO, CustomUserDetails userDetails, Long postId){
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
@@ -47,21 +47,21 @@ public class CommentService {
         Comment comment = Comment.builder()
                 .user(user)
                 .post(post)
-                .content(commentRequest.getContent())
+                .content(commentRequestDTO.getContent())
                 .build();
 
         commentRepository.save(comment);
     }
 
     @Transactional(readOnly = true)
-    public List<CommentResponse> findByPostId(Long postId) {
+    public List<CommentResponseDTO> findByPostId(Long postId) {
 
         if(!postRepository.existsById(postId)){
             throw new CustomException(ErrorCode.POST_NOT_FOUND);
         }
 
-        return commentRepository.findByPostId(postId).stream()
-                .map(comment -> new CommentResponse(
+        return commentRepository.findAllByPostId(postId).stream()
+                .map(comment -> new CommentResponseDTO(
                         comment.getId()
                         , comment.getUser().getUserId()
                         , comment.getUser().getName()
@@ -71,7 +71,7 @@ public class CommentService {
     }
 
     @Transactional
-    public void patchComment(Long commentId, CustomUserDetails userDetails, CommentRequest commentRequest) {
+    public void patchComment(Long commentId, CustomUserDetails userDetails, CommentRequestDTO commentRequestDTO) {
 
         User user = userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -83,7 +83,7 @@ public class CommentService {
             throw new CustomException(ErrorCode.USER_NOT_MATCH);
         }
 
-        comment.updateContent(commentRequest.getContent());
+        comment.updateContent(commentRequestDTO.getContent());
     }
 
     @Transactional

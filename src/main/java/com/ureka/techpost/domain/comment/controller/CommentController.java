@@ -2,8 +2,8 @@ package com.ureka.techpost.domain.comment.controller;
 
 
 import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
-import com.ureka.techpost.domain.comment.dto.CommentRequest;
-import com.ureka.techpost.domain.comment.dto.CommentResponse;
+import com.ureka.techpost.domain.comment.dto.CommentRequestDTO;
+import com.ureka.techpost.domain.comment.dto.CommentResponseDTO;
 import com.ureka.techpost.domain.comment.service.CommentService;
 import com.ureka.techpost.global.apiPayload.ApiResponse;
 import com.ureka.techpost.global.apiPayload.code.status.SuccessStatus;
@@ -33,20 +33,20 @@ public class CommentController {
 
     @Operation(summary = "댓글 작성", description = "특정 게시글(postId)에 새로운 댓글을 작성합니다.")
     @PostMapping("/posts/{postId}/comments")
-    public ApiResponse<Void> addComment(@Parameter(description = "댓글을 달 게시글의 ID") @PathVariable Long postId,
-                                          @RequestBody CommentRequest commentRequest,
-                                          @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails){
+    public ApiResponse<Void> createComment(@Parameter(description = "댓글을 달 게시글의 ID") @PathVariable Long postId,
+                                           @RequestBody CommentRequestDTO commentRequestDTO,
+                                           @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails){
 
-        commentService.addComment(commentRequest, userDetails, postId);
+        commentService.createComment(commentRequestDTO, userDetails, postId);
 
         return ApiResponse.of(SuccessStatus._CREATED, null);
     }
 
     @Operation(summary = "댓글 목록 조회", description = "특정 게시글(postId)에 달린 모든 댓글 목록을 조회합니다.")
     @GetMapping("/posts/{postId}/comments")
-    public ApiResponse<List<CommentResponse>> getComments(@Parameter(description = "조회할 게시글의 ID") @PathVariable Long postId){
+    public ApiResponse<List<CommentResponseDTO>> getComments(@Parameter(description = "조회할 게시글의 ID") @PathVariable Long postId){
 
-        List<CommentResponse> commentResponseList = commentService.findByPostId(postId);
+        List<CommentResponseDTO> commentResponseList = commentService.findByPostId(postId);
 
         return ApiResponse.onSuccess(commentResponseList);
     }
@@ -64,10 +64,10 @@ public class CommentController {
     @Operation(summary = "댓글 수정", description = "댓글 ID를 이용하여 본인이 작성한 댓글 내용을 수정합니다.")
     @PatchMapping("/comments/{commentId}")
     public ApiResponse<Void> patchComment(@Parameter(description = "수정할 댓글의 ID") @PathVariable Long commentId,
-                                               @RequestBody CommentRequest commentRequest,
+                                               @RequestBody CommentRequestDTO commentRequestDTO,
                                                @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails){
 
-        commentService.patchComment(commentId, userDetails, commentRequest);
+        commentService.patchComment(commentId, userDetails, commentRequestDTO);
 
         return ApiResponse.of(SuccessStatus._NO_CONTENT, null);
     }
