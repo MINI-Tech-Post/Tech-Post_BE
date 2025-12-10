@@ -81,7 +81,7 @@ public class SecurityConfig {
 
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(WHITE_LIST).permitAll()
-						.anyRequest().permitAll()
+						.anyRequest().authenticated()
 				)
 
 				.oauth2Login(oauth2 -> oauth2

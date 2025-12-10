@@ -73,6 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 인증 객체(Authentication) 생성을 위한 임시 User 객체 생성
         // 비밀번호는 이미 토큰 검증을 통과했으므로 임의의 값으로 설정
         User user = User.builder()
+				.userId(foundUser.getUserId())
                 .username(username)
                 .password("temppassword")
                 .name(foundUser.getName())
