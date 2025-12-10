@@ -5,7 +5,7 @@ import com.ureka.techpost.domain.post.dto.PostResponseDTO;
 import com.ureka.techpost.domain.post.dto.PostRequestDTO;
 import com.ureka.techpost.domain.post.service.PostService;
 import com.ureka.techpost.global.apiPayload.ApiResponse;
-import com.ureka.techpost.global.apiPayload.code.status.SuccessStatus;
+import com.ureka.techpost.global.apiPayload.code.SuccessStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;

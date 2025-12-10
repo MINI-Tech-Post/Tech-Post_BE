@@ -1,7 +1,5 @@
-package com.ureka.techpost.global.apiPayload.code.status;
+package com.ureka.techpost.global.apiPayload.code;
 
-import com.ureka.techpost.global.apiPayload.code.BaseCode;
-import com.ureka.techpost.global.apiPayload.code.ReasonDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
