@@ -38,16 +38,15 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
-
-    static final String[] WHITE_LIST = {"/swagger-ui/**",
-            "/v3/api-docs/**",
-            "/swagger-resources/**",
-            "/health",
-            "/", "/login", "/signup", "/css/**", "/js/**", "/oauth2/**",
-            "/api/auth/**",
-            "/connect/**"
-    };
-
+	static final String[] WHITE_LIST = {"/swagger-ui/**",
+			"/v3/api-docs/**",
+			"/swagger-resources/**",
+			"/health",
+			"/", "/login", "/signup", "/css/**", "/js/**", "/oauth2/**",
+			"/api/auth/**",
+            "/connect/**",
+			"/crawl/**"
+	};
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
