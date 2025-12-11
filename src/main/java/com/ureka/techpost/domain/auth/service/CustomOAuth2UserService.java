@@ -44,19 +44,20 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // 제공자에 따라 적절한 OAuth2UserInfo 구현체 선택
 		OAuth2UserInfo oAuth2UserInfo = getOAuth2UserInfo(provider, oAuth2User);
 
-		// 소셜 사용자의 고유 ID와 제공자 이름을 조합하여 유니크한 username 생성
-        // 예: google_112233445566
-        String username = provider + "_" + oAuth2UserInfo.getProviderId();
-        
-        // DB에서 해당 사용자를 조회
-        User existingUser = userRepository.findByUsername(username).orElse(null);
+		// DB에서 소셜 로그인 정보로 해당 사용자를 조회
+		User existingUser = userRepository.findByProviderAndProviderId(provider, oAuth2UserInfo.getProviderId()).orElse(null);
 
         User user;
         if (existingUser != null) {
             // 이미 가입된 사용자인 경우, 기존 정보를 그대로 사용
             user = existingUser;
         } else {
-            // 신규 사용자인 경우, 자동 회원가입 진행
+			// 소셜 정보로 가입된 적이 없는 경우 -> 신규 회원가입 진행
+			String email = oAuth2UserInfo.getEmail();
+			// username을 "provider_이메일" 형식으로 생성하여 유니크성 보장 (이메일 없으면 providerId 사용)
+			String username = (email != null && !email.isEmpty()) ? provider + "_" + email : provider + "_" + oAuth2UserInfo.getProviderId();
+
+			// 신규 사용자인 경우, 자동 회원가입 진행
             String randomPassword = passwordEncoder.encode(UUID.randomUUID().toString());
             user = User.builder()
                     .username(username)

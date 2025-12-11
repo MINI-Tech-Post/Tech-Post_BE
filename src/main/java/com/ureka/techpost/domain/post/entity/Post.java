@@ -45,7 +45,7 @@ public class Post extends BaseEntity {
     @Column(name = "source_name")
     private String sourceName;
 
-    @Column(name = "thumbnail_url", nullable = false)
+    @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
     @Builder
