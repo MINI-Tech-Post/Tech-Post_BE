@@ -17,12 +17,12 @@ import java.util.List;
 
 import static com.ureka.techpost.domain.post.entity.QPost.post;
 import static com.ureka.techpost.domain.comment.entity.QComment.comment;
-//import static com.ureka.techpost.domain.post.entity.QLikes.likes;
+import static com.ureka.techpost.domain.likes.entity.QLikes.likes;
 
 /**
  * @file PostRepositoryImpl.java
  * @author 최승언
- * @version 1.1
+ * @version 1.2
  * @since 2025-12-09
  * @description QueryDSL을 활용하여 게시글 검색, 필터링 등 복잡한 조회 로직을 실제로 구현한 클래스입니다.
  */
@@ -45,14 +45,11 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         post.publishedAt,
                         post.sourceName,
                         post.createdAt,
-                        // 좋아요 수
-                        // [수정] 좋아요 수: 아직 없으므로 0으로 대체
-                        // ExpressionUtils.as(
-                        //        JPAExpressions.select(likes.count())
-                        //                .from(likes)
-                        //                .where(likes.post.eq(post)),
-                        //        "likeCount"),
-                        com.querydsl.core.types.dsl.Expressions.asNumber(0L),
+                         ExpressionUtils.as(
+                                JPAExpressions.select(likes.count())
+                                        .from(likes)
+                                        .where(likes.post.eq(post)),
+                                "likeCount"),
 
                          ExpressionUtils.as(
                                 JPAExpressions.select(comment.count())
