@@ -1,10 +1,11 @@
 package com.ureka.techpost.domain.auth.service;
 
 import com.ureka.techpost.domain.auth.entity.RefreshToken;
-import com.ureka.techpost.domain.auth.exception.InvalidTokenException;
 import com.ureka.techpost.domain.auth.jwt.JwtUtil;
 import com.ureka.techpost.domain.auth.repository.RefreshTokenRepository;
 import com.ureka.techpost.domain.user.entity.User;
+import com.ureka.techpost.global.exception.CustomException;
+import com.ureka.techpost.global.exception.ErrorCode;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -62,40 +63,40 @@ public class TokenService {
     // 리프레시 토큰 검증
     public void validateRefreshToken(String token) {
         if (token == null) {
-            throw new InvalidTokenException("리프레시 토큰이 없습니다.");
+            throw new CustomException(ErrorCode.REFRESH_TOKEN_MISSING);
         }
 
         try {
             jwtUtil.isExpired(token);
         } catch (ExpiredJwtException e) {
-            throw new InvalidTokenException("만료된 리프레시 토큰입니다.");
+            throw new CustomException(ErrorCode.REFRESH_TOKEN_EXPIRED);
         }
 
         String category = jwtUtil.getCategory(token);
         if (!category.equals("refresh")) {
-            throw new InvalidTokenException("유효하지 않은 카테고리의 토큰입니다.");
+            throw new CustomException(ErrorCode.INVALID_TOKEN_CATEGORY);
         }
 
         if (!existsByTokenValue(token)) {
-            throw new InvalidTokenException("DB에 존재하지 않는 리프레시 토큰입니다.");
+            throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
     }
 
     // 액세스 토큰 검증
     public void validateAccessToken(String token) {
         if (token == null) {
-            throw new InvalidTokenException("액세스 토큰이 없습니다.");
+            throw new CustomException(ErrorCode.ACCESS_TOKEN_MISSING);
         }
 
         try {
             jwtUtil.isExpired(token);
         } catch (ExpiredJwtException e) {
-            throw new InvalidTokenException("만료된 액세스 토큰입니다.");
+            throw new CustomException(ErrorCode.ACCESS_TOKEN_EXPIRED);
         }
 
         String category = jwtUtil.getCategory(token);
         if (!category.equals("access")) {
-            throw new InvalidTokenException("유효하지 않은 카테고리의 토큰입니다.");
+            throw new CustomException(ErrorCode.INVALID_TOKEN_CATEGORY);
         }
 
     }
