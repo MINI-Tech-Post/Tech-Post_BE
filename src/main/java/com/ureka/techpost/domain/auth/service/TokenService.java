@@ -44,7 +44,7 @@ public class TokenService {
     // 쿠키 생성
     public Cookie createCookie(String key, String value) {
         Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(24 * 60 * 60);
+        cookie.setMaxAge(1209600); // 14일 (리프레시 토큰 유효기간과 일치)
         cookie.setHttpOnly(true);
         return cookie;
     }

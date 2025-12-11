@@ -1,5 +1,6 @@
 package com.ureka.techpost.domain.auth.service;
 
+import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
 import com.ureka.techpost.domain.auth.dto.LoginDto;
 import com.ureka.techpost.domain.auth.dto.SignupDto;
 import com.ureka.techpost.domain.auth.jwt.JwtUtil;
@@ -68,25 +69,15 @@ public class AuthService {
 		// 인증 성공 시, 사용자 정보(Principal)와 권한(Authorities)을 포함한 Authentication 객체 반환
 		Authentication authentication = authenticationManager.authenticate(authToken);
 
-		// 인증된 사용자 이름 추출
-		String authenticatedUsername = authentication.getName();
-
-		// 인증된 사용자의 권한(Role) 추출
-		Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-		Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
-		GrantedAuthority auth = iterator.next();
-		String role = auth.getAuthority();
+		// 사용자 추출
+		CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
 
 		// JWT 액세스 토큰 및 리프레시 토큰 생성
-		String access = jwtUtil.generateAccessToken("access", authenticatedUsername, role);
+		String access = jwtUtil.generateAccessToken("access", user.getUsername(), user.getUser().getRoleName());
 		String refresh = jwtUtil.generateRefreshToken("refresh");
 
-		// DB에서 사용자 정보 조회 (리프레시 토큰 저장을 위함)
-		User user = userRepository.findByUsername(authenticatedUsername)
-				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
 		// 새로 발급된 리프레시 토큰을 DB에 저장 (기존 토큰이 있다면 업데이트)
-		tokenService.addRefreshToken(user, refresh);
+		tokenService.addRefreshToken(user.getUser(), refresh);
 
 		// 클라이언트 응답 헤더에 액세스 토큰 추가 (Bearer 타입)
 		response.setHeader("Authorization", "Bearer " + access);
