@@ -5,6 +5,14 @@ import com.ureka.techpost.domain.post.entity.Post;
 
 import java.util.List;
 
+/**
+ * @file BaseCrawler.java
+ @author 유효주
+ @version 1.0
+ @since 2025-12-11
+ @description 이 파일은 크롤링하는 기능을 정의하는 인터페이스입니다.
+ */
+
 public interface BaseCrawler {
 
     /**

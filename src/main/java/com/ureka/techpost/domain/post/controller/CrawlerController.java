@@ -8,6 +8,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * @file CrawlerController.java
+ @author 유효주
+ @version 1.0
+ @since 2025-12-11
+ @description 이 파일은 크롤러를 실행하는 컨트롤러 클래스입니다. 스케쥴링 클래스가 실행되지 않는다면 이 컨트롤러를 통해 수동으로 크롤러를 실행할 수 있습니다.
+ */
+
 @Slf4j
 @RestController
 @RequestMapping("/crawl")

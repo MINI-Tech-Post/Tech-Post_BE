@@ -16,6 +16,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @file NewsZdnetCrawler.java
+ @author 유효주
+ @version 1.0
+ @since 2025-12-11
+ @description 이 파일은 Zdnet의 컴퓨팅 부문 인기뉴스를 크롤링하는 클래스입니다.
+ */
+
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

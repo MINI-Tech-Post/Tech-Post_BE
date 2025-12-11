@@ -16,6 +16,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @file BlogTvingCrawler.java
+ @author 유효주
+ @version 1.0
+ @since 2025-12-11
+ @description 이 파일은 티빙 테크 블로그(Medium) RSS 피드를 파싱하는 클래스입니다.
+ */
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
