@@ -44,10 +44,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         String access = jwtUtil.generateAccessToken("access", oAuth2User.getUsername(), oAuth2User.getUser().getRoleName());
         String refresh = jwtUtil.generateRefreshToken("refresh");
 
-        // 리프레시 토큰 저장 및 쿠키에 추가
-        User user = userRepository.findByUsername(oAuth2User.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("해당하는 유저를 찾을 수 없습니다."));
-        tokenService.addRefreshToken(user, refresh);
+        tokenService.addRefreshToken(oAuth2User.getUser(), refresh);
         response.addCookie(tokenService.createCookie("refresh", refresh));
         
         // 액세스 토큰을 쿼리 파라미터에 담아 프론트엔드 URL로 리다이렉트
