@@ -1,10 +1,11 @@
 package com.ureka.techpost.domain.auth.service;
 
 import com.ureka.techpost.domain.auth.entity.RefreshToken;
-import com.ureka.techpost.domain.auth.exception.InvalidTokenException;
 import com.ureka.techpost.domain.auth.jwt.JwtUtil;
 import com.ureka.techpost.domain.auth.repository.RefreshTokenRepository;
 import com.ureka.techpost.domain.user.entity.User;
+import com.ureka.techpost.global.exception.CustomException;
+import com.ureka.techpost.global.exception.ErrorCode;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,39 +26,6 @@ public class TokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
-
-    // 로그아웃 처리
-    public void logout(HttpServletRequest request, HttpServletResponse response) {
-        String refresh = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("refresh")) {
-                    refresh = cookie.getValue();
-                    break;
-                }
-            }
-        }
-
-        // 토큰이 존재하면 검증 및 DB 삭제 시도
-        if (refresh != null) {
-            try {
-                // 토큰 검증 (만료, 위조, DB 존재 여부 확인)
-                validateRefreshToken(refresh);
-                // DB에서 Refresh 토큰 제거
-                deleteByTokenValue(refresh);
-            } catch (InvalidTokenException e) {
-                // 토큰이 유효하지 않거나(만료 등), 이미 DB에 없는 경우
-                // 로그아웃 과정이므로 무시하고 쿠키 삭제로 넘어감
-            }
-        }
-
-        // response에서 쿠키 제거 (항상 수행하여 클라이언트 상태 정리)
-        Cookie cookie = new Cookie("refresh", null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        response.addCookie(cookie);
-    }
 
     // DB에 Refresh 토큰 저장 (Redis)
     public void addRefreshToken(User user, String refresh) {
@@ -95,40 +63,40 @@ public class TokenService {
     // 리프레시 토큰 검증
     public void validateRefreshToken(String token) {
         if (token == null) {
-            throw new InvalidTokenException("리프레시 토큰이 없습니다.");
+            throw new CustomException(ErrorCode.REFRESH_TOKEN_MISSING);
         }
 
         try {
             jwtUtil.isExpired(token);
         } catch (ExpiredJwtException e) {
-            throw new InvalidTokenException("만료된 리프레시 토큰입니다.");
+            throw new CustomException(ErrorCode.REFRESH_TOKEN_EXPIRED);
         }
 
         String category = jwtUtil.getCategory(token);
         if (!category.equals("refresh")) {
-            throw new InvalidTokenException("유효하지 않은 카테고리의 토큰입니다.");
+            throw new CustomException(ErrorCode.INVALID_TOKEN_CATEGORY);
         }
 
         if (!existsByTokenValue(token)) {
-            throw new InvalidTokenException("DB에 존재하지 않는 리프레시 토큰입니다.");
+            throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
     }
 
     // 액세스 토큰 검증
     public void validateAccessToken(String token) {
         if (token == null) {
-            throw new InvalidTokenException("액세스 토큰이 없습니다.");
+            throw new CustomException(ErrorCode.ACCESS_TOKEN_MISSING);
         }
 
         try {
             jwtUtil.isExpired(token);
         } catch (ExpiredJwtException e) {
-            throw new InvalidTokenException("만료된 액세스 토큰입니다.");
+            throw new CustomException(ErrorCode.ACCESS_TOKEN_EXPIRED);
         }
 
         String category = jwtUtil.getCategory(token);
         if (!category.equals("access")) {
-            throw new InvalidTokenException("유효하지 않은 카테고리의 토큰입니다.");
+            throw new CustomException(ErrorCode.INVALID_TOKEN_CATEGORY);
         }
 
     }

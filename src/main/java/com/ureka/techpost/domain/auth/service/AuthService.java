@@ -2,10 +2,11 @@ package com.ureka.techpost.domain.auth.service;
 
 import com.ureka.techpost.domain.auth.dto.LoginDto;
 import com.ureka.techpost.domain.auth.dto.SignupDto;
-import com.ureka.techpost.domain.auth.exception.InvalidTokenException;
 import com.ureka.techpost.domain.auth.jwt.JwtUtil;
 import com.ureka.techpost.domain.user.entity.User;
 import com.ureka.techpost.domain.user.repository.UserRepository;
+import com.ureka.techpost.global.exception.CustomException;
+import com.ureka.techpost.global.exception.ErrorCode;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +18,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +48,7 @@ public class AuthService {
     public void signup(SignupDto signupDto) {
         // DB에 입력한 username이 존재하는지 확인
         if (userRepository.existsByUsername(signupDto.getUsername())) {
-            throw new RuntimeException("이미 가입되어 있는 회원입니다.");
+            throw new CustomException(ErrorCode.USER_ALREADY_EXISTS);
         }
 
         // 없으면 DB에 회원 저장
@@ -83,7 +83,7 @@ public class AuthService {
 
 		// DB에서 사용자 정보 조회 (리프레시 토큰 저장을 위함)
 		User user = userRepository.findByUsername(authenticatedUsername)
-				.orElseThrow(() -> new UsernameNotFoundException("해당하는 회원을 찾을 수 없습니다."));
+				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
 		// 새로 발급된 리프레시 토큰을 DB에 저장 (기존 토큰이 있다면 업데이트)
 		tokenService.addRefreshToken(user, refresh);
@@ -102,21 +102,11 @@ public class AuthService {
 		String authorization = request.getHeader("Authorization");
 		// Access Token 검증
 		if (authorization == null || !authorization.startsWith("Bearer ")) {
-			throw new InvalidTokenException("액세스 토큰이 없습니다.");
+			throw new CustomException(ErrorCode.ACCESS_TOKEN_MISSING);
 		}
 		String accessToken = authorization.split(" ")[1];
 
-		// Refresh 토큰 검증
-		String refresh = null;
-		Cookie[] cookies = request.getCookies();
-		if (cookies != null) {
-			for (Cookie cookie : cookies) {
-				if (cookie.getName().equals("refresh")) {
-					refresh = cookie.getValue();
-					break;
-				}
-			}
-		}
+		String refresh = getRefreshTokenFromCookie(request);
 
 		tokenService.validateRefreshToken(refresh);
 
@@ -126,7 +116,7 @@ public class AuthService {
 		String username = jwtUtil.getUsernameFromExpirationToken(accessToken);
 
 		User foundUser = userRepository.findByUsername(username)
-				.orElseThrow(() -> new UsernameNotFoundException("회원을 찾을 수 없습니다."));
+				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
 		// 새로운 access/refresh 토큰 생성
 		String newAccess = jwtUtil.generateAccessToken("access", username, foundUser.getRoleName());
@@ -143,4 +133,42 @@ public class AuthService {
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
+	// 로그아웃 처리
+	public void logout(HttpServletRequest request, HttpServletResponse response) {
+		String refresh = getRefreshTokenFromCookie(request);
+
+		// 토큰이 존재하면 검증 및 DB 삭제 시도
+		if (refresh != null) {
+			try {
+				// 토큰 검증 (만료, 위조, DB 존재 여부 확인)
+				tokenService.validateRefreshToken(refresh);
+				// DB에서 Refresh 토큰 제거
+				tokenService.deleteByTokenValue(refresh);
+			} catch (CustomException e) {
+				// 토큰이 유효하지 않거나(만료 등), 이미 DB에 없는 경우
+				// 로그아웃 과정이므로 무시하고 쿠키 삭제로 넘어감
+			}
+		}
+
+		// response에서 쿠키 제거 (항상 수행하여 클라이언트 상태 정리)
+		Cookie cookie = new Cookie("refresh", null);
+		cookie.setMaxAge(0);
+		cookie.setPath("/");
+		response.addCookie(cookie);
+	}
+
+	private static String getRefreshTokenFromCookie(HttpServletRequest request) {
+		// Refresh 토큰 검증
+		String refresh = null;
+		Cookie[] cookies = request.getCookies();
+		if (cookies != null) {
+			for (Cookie cookie : cookies) {
+				if (cookie.getName().equals("refresh")) {
+					refresh = cookie.getValue();
+					break;
+				}
+			}
+		}
+		return refresh;
+	}
 }

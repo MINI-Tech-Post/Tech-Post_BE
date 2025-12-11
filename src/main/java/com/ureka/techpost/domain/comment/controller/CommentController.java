@@ -6,7 +6,7 @@ import com.ureka.techpost.domain.comment.dto.CommentRequestDTO;
 import com.ureka.techpost.domain.comment.dto.CommentResponseDTO;
 import com.ureka.techpost.domain.comment.service.CommentService;
 import com.ureka.techpost.global.apiPayload.ApiResponse;
-import com.ureka.techpost.global.apiPayload.code.status.SuccessStatus;
+import com.ureka.techpost.global.apiPayload.code.SuccessStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
