@@ -45,7 +45,8 @@ public class SecurityConfig {
 			"/health",
 			"/", "/login", "/signup", "/css/**", "/js/**", "/oauth2/**",
 			"/api/auth/**",
-            "/connect/**"
+            "/connect/**",
+			"/crawl/**"
 	};
 
 	@Bean

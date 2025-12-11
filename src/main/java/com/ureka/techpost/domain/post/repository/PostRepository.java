@@ -45,4 +45,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
             "WHERE p.id = :postId")
     Optional<PostResponseDTO> findPostById(@Param("postId") Long postId);
 
+    // URL로 게시글 찾기
+    Optional<Post> findByOriginalUrl(String originalUrl);
+
 }

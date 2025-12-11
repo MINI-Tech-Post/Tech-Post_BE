@@ -32,8 +32,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
+
     @Override
     public Page<PostResponseDTO> search(String keyword, String sourceName, Pageable pageable) {
+
         List<PostResponseDTO> content = queryFactory
                 .select(Projections.constructor(PostResponseDTO.class,
                         post.id,
