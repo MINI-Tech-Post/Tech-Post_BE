@@ -41,11 +41,11 @@ public class JwtUtil {
 
     // Access 토큰 생성 메소드
     // username, role, category 담겨있음
-    public String generateAccessToken(String category, String username, String role) {
+    public String generateAccessToken(String category, String username, String name, String role) {
         return Jwts.builder()
                 .subject(username)
                 .claim("role", role)
-                .claim("category", category)
+                .claim("category", category).claim("name", name)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRE_TIME))
                 .signWith(key)

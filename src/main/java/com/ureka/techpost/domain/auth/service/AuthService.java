@@ -73,7 +73,7 @@ public class AuthService {
 		CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
 
 		// JWT 액세스 토큰 및 리프레시 토큰 생성
-		String access = jwtUtil.generateAccessToken("access", user.getUsername(), user.getUser().getRoleName());
+		String access = jwtUtil.generateAccessToken("access", user.getUsername(), user.getUser().getName(), user.getUser().getRoleName());
 		String refresh = jwtUtil.generateRefreshToken("refresh");
 
 		// 새로 발급된 리프레시 토큰을 DB에 저장 (기존 토큰이 있다면 업데이트)
@@ -110,7 +110,7 @@ public class AuthService {
 				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
 		// 새로운 access/refresh 토큰 생성
-		String newAccess = jwtUtil.generateAccessToken("access", username, foundUser.getRoleName());
+		String newAccess = jwtUtil.generateAccessToken("access", username, foundUser.getName(), foundUser.getRoleName());
 		String newRefresh = jwtUtil.generateRefreshToken("refresh");
 
 		// 기존 Refresh 토큰 DB에서 삭제 후 새 Refresh 토큰 저장

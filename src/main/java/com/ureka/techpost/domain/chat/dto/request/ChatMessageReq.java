@@ -21,4 +21,5 @@ public class ChatMessageReq {
 
     private String message;
     private String senderName;
+    private String senderId;
 }
