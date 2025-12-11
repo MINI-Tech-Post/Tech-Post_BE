@@ -17,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
@@ -29,8 +31,9 @@ public class StompController {
     private final ChatService chatService;
 
     @MessageMapping("/{roomId}")
-    public void sendMessage(@DestinationVariable Long roomId, @AuthenticationPrincipal CustomUserDetails userDetails, @Payload @Valid ChatMessageReq chatMessageReq) {
-      Long userId = userDetails.getUser().getUserId();
+    public void sendMessage(@DestinationVariable Long roomId, SimpMessageHeaderAccessor accessor, @Payload @Valid ChatMessageReq chatMessageReq) {
+      CustomUserDetails customUserDetails = (CustomUserDetails) accessor.getSessionAttributes().get("user");
+      Long userId = customUserDetails.getUser().getUserId();
 
       chatService.saveMessage(roomId, userId, chatMessageReq);
       messageTemplate.convertAndSend("/topic/" + roomId, chatMessageReq);
