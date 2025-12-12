@@ -40,26 +40,26 @@ public class AuthController {
 		return ApiResponse.onSuccess("회원가입 성공");
 	}
 
-	@Operation(summary = "토큰 재발급", description = "Refresh Token을 사용하여 만료된 Access Token을 재발급합니다. Refresh Token은 쿠키에서, 만료된 Access Token은 헤더에서 가져옵니다.")
-	@PostMapping("/reissue")
-	public ApiResponse<?> reissue(
-			@Parameter(hidden = true) HttpServletRequest request,
-			@Parameter(hidden = true) HttpServletResponse response) {
-
-		// Request에서 토큰 추출
-		String authorization = request.getHeader("Authorization");
-		String accessToken = (authorization != null && authorization.startsWith("Bearer ")) ? authorization.split(" ")[1] : null;
-		String refreshToken = CookieUtil.getCookieValue(request, "refresh");
-
-		// 서비스 호출
-		TokenDto tokenDto = authService.reissue(accessToken, refreshToken);
-
-		// Response 설정 (헤더 + 쿠키)
-		response.setHeader("Authorization", "Bearer " + tokenDto.getAccessToken());
-		response.addCookie(CookieUtil.createCookie("refresh", tokenDto.getRefreshToken(), 1209600));
-
-		return ApiResponse.onSuccess("재발급 성공");
-	}
+//	@Operation(summary = "토큰 재발급", description = "Refresh Token을 사용하여 만료된 Access Token을 재발급합니다. Refresh Token은 쿠키에서, 만료된 Access Token은 헤더에서 가져옵니다.")
+//	@PostMapping("/reissue")
+//	public ApiResponse<?> reissue(
+//			@Parameter(hidden = true) HttpServletRequest request,
+//			@Parameter(hidden = true) HttpServletResponse response) {
+//
+//		// Request에서 토큰 추출
+//		String authorization = request.getHeader("Authorization");
+//		String accessToken = (authorization != null && authorization.startsWith("Bearer ")) ? authorization.split(" ")[1] : null;
+//		String refreshToken = CookieUtil.getCookieValue(request, "refresh");
+//
+//		// 서비스 호출
+//		TokenDto tokenDto = authService.reissue(accessToken, refreshToken);
+//
+//		// Response 설정 (헤더 + 쿠키)
+//		response.setHeader("Authorization", "Bearer " + tokenDto.getAccessToken());
+//		response.addCookie(CookieUtil.createCookie("refresh", tokenDto.getRefreshToken(), 1209600));
+//
+//		return ApiResponse.onSuccess("재발급 성공");
+//	}
 
 	@Operation(summary = "로그인", description = "사용자 이름과 비밀번호로 로그인하여 Access Token 및 Refresh Token을 발급받습니다.")
 	@PostMapping("/login")
@@ -72,7 +72,7 @@ public class AuthController {
 
 		// Response 설정
 		response.setHeader("Authorization", "Bearer " + tokenDto.getAccessToken());
-		response.addCookie(CookieUtil.createCookie("refresh", tokenDto.getRefreshToken(), 1209600));
+		//response.addCookie(CookieUtil.createCookie("refresh", tokenDto.getRefreshToken(), 1209600));
 
 		return ApiResponse.onSuccess("로그인 성공");
 	}
@@ -83,13 +83,13 @@ public class AuthController {
 			@Parameter(hidden = true) HttpServletRequest request,
 			@Parameter(hidden = true) HttpServletResponse response) {
 		// 쿠키에서 리프레시 토큰 추출
-		String refreshToken = CookieUtil.getCookieValue(request, "refresh");
+		//String refreshToken = CookieUtil.getCookieValue(request, "refresh");
 
 		// 서비스 호출 (DB 삭제)
-		authService.logout(refreshToken);
+		//authService.logout(refreshToken);
 
 		// 클라이언트 쿠키 삭제 (항상 수행)
-		CookieUtil.deleteCookie(response, "refresh");
+		//CookieUtil.deleteCookie(response, "refresh");
 
 		return ResponseEntity.ok("로그아웃 성공");
 	}
