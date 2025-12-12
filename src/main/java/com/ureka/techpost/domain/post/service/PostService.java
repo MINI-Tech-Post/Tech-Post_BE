@@ -7,10 +7,15 @@ import com.ureka.techpost.domain.post.dto.PostResponseDTO;
 import com.ureka.techpost.domain.post.dto.PostRequestDTO;
 import com.ureka.techpost.domain.post.entity.Post;
 import com.ureka.techpost.domain.post.repository.PostRepository;
+import com.ureka.techpost.global.exception.CustomException;
+import com.ureka.techpost.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @file PostService.java
@@ -25,11 +30,20 @@ import org.springframework.stereotype.Service;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final PostRedisService postRedisService;
     private final LikesRepository likesRepository;
+    private final PostCacheService postCacheService;
 
     public PostResponseDTO findById(Long id, CustomUserDetails userDetails) {
-        PostResponseDTO dto = postRepository.findPostById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글 없음"));
+
+        // 게시글 기본 정보 가져오기
+        // 캐시 히트 -> redis에서 정보 반환
+        // 캐시 미스 -> DB에서 정보 반환
+        PostResponseDTO dto = postCacheService.getPostBaseDto(id);
+
+        // Redis에 있으면 쓰고, 없으면 DB에서 가져와서 캐싱
+        dto.setLikeCount(postRedisService.getLikeCount(id));
+        dto.setCommentCount(postRedisService.getCommentCount(id));
 
         if (userDetails != null) {
             Long userId = userDetails.getUser().getUserId();
@@ -42,40 +56,61 @@ public class PostService {
         return dto;
     }
 
+    public Page<PostResponseDTO> search(String keyword, String publisher, Pageable pageable){
+
+        Page<PostResponseDTO> page = postRepository.search(keyword, publisher, pageable);
+
+        // 조회된 데이터 redis 캐싱
+        page.getContent().forEach((dto) -> postRedisService.savePostDtoToRedis(dto));
+        return page;
+    }
+
+    public List<PostResponseDTO> getPopularPosts() {
+        List<Long> topIds = postRedisService.getTopLikedPostIds(10);
+        List<PostResponseDTO> result = new ArrayList<>();
+
+        for (Long id : topIds) {
+            try {
+                result.add(this.findById(id, null));
+            } catch (CustomException e) {
+                postRedisService.removeRanking(id);
+            }
+        }
+
+        return result;
+    }
+
     public void save(PostRequestDTO postRequestDTO, CustomUserDetails userDetails) {
 
         if(!userDetails.getUser().getRoleName().equals("ROLE_ADMIN")){
-            throw new IllegalArgumentException("권한이 없음");
+            throw new CustomException(ErrorCode.USER_NOT_MATCH);
         }
 
         if(postRepository.existsByOriginalUrl(postRequestDTO.getOriginalUrl())){
-            throw new IllegalArgumentException("이미 존재하는 게시글");
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
         }
 
         postRepository.save(Post.builder()
-                        .title(postRequestDTO.getTitle())
-                        .summary(postRequestDTO.getSummary())
-                        .originalUrl(postRequestDTO.getOriginalUrl())
-                        .publisher(postRequestDTO.getPublisher())
-                        .publishedAt(postRequestDTO.getPublishedAt())
-                        .sourceName(postRequestDTO.getSourceName())
-                        .thumbnailUrl(postRequestDTO.getThumbnailUrl())
-                        .build());
-    }
-
-    public Page<PostResponseDTO> search(String keyword, String publisher, Pageable pageable){
-        return postRepository.search(keyword, publisher, pageable);
+                .title(postRequestDTO.getTitle())
+                .summary(postRequestDTO.getSummary())
+                .originalUrl(postRequestDTO.getOriginalUrl())
+                .publisher(postRequestDTO.getPublisher())
+                .publishedAt(postRequestDTO.getPublishedAt())
+                .sourceName(postRequestDTO.getSourceName())
+                .thumbnailUrl(postRequestDTO.getThumbnailUrl())
+                .build());
     }
 
     public void deletePost(Long postId, CustomUserDetails userDetails) {
 
         if(!userDetails.getUser().getRoleName().equals("ROLE_ADMIN")){
-            throw new IllegalArgumentException("권한이 없음");
+            throw new CustomException(ErrorCode.USER_NOT_MATCH);
         }
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시물"));
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
         postRepository.delete(post);
     }
+
 }
