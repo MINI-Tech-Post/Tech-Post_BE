@@ -2,7 +2,7 @@ package com.ureka.techpost.global.config;
 
 import com.ureka.techpost.domain.auth.handler.CustomAccessDeniedHandler;
 import com.ureka.techpost.domain.auth.handler.CustomAuthenticationEntryPoint;
-import com.ureka.techpost.domain.auth.handler.CustomAuthenticationFailureHandler;
+import com.ureka.techpost.domain.auth.handler.CustomOAuth2FailureHandler;
 import com.ureka.techpost.domain.auth.handler.OAuth2LoginSuccessHandler;
 import com.ureka.techpost.domain.auth.jwt.JwtAuthenticationFilter;
 import com.ureka.techpost.domain.auth.jwt.JwtUtil;
@@ -69,7 +69,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            CustomAuthenticationEntryPoint authenticationEntryPoint,
-                                           CustomAuthenticationFailureHandler authenticationFailureHandler,
+                                           CustomOAuth2FailureHandler customOAuth2FailureHandler,
                                            CustomAccessDeniedHandler AccessDeniedHandler) throws Exception {
 
         http
@@ -94,7 +94,7 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfoEndpointConfig -> userInfoEndpointConfig
                                 .userService(customOAuth2UserService))
                         .successHandler(oAuth2LoginSuccessHandler)
-                        .failureHandler(authenticationFailureHandler)
+                        .failureHandler(customOAuth2FailureHandler)
                 )
 
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
