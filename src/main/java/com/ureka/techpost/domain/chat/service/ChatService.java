@@ -95,6 +95,7 @@ public class ChatService {
         for (ChatMessage chatMessage : chatMessages) {
             ChatMessageRes chatMessageRes = ChatMessageRes.builder()
                 .message(chatMessage.getContent())
+                .senderId(chatMessage.getUser().getUsername())
                 .senderName(chatMessage.getUser().getName())
                 .build();
             chatMessageResList.add(chatMessageRes);
@@ -113,18 +114,17 @@ public class ChatService {
     @Transactional
     public void joinChatRoom(CustomUserDetails userDetails, Long roomId) {
         User user = userRepository.findById(userDetails.getUser().getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("user cannot be found"));
+            .orElseThrow(() -> new EntityNotFoundException("user cannot be found"));
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new EntityNotFoundException("room cannot be found"));
+            .orElseThrow(() -> new EntityNotFoundException("room cannot be found"));
 
-        if (chatParticipantRepository.existsByUserAndChatRoom(user, chatRoom))
-            throw new IllegalStateException("이미 참여 중인 채팅방입니다");
-
-        ChatParticipant chatParticipant = ChatParticipant.builder()
+        if (!chatParticipantRepository.existsByUserAndChatRoom(user, chatRoom)){
+            ChatParticipant chatParticipant = ChatParticipant.builder()
                 .chatRoom(chatRoom)
                 .user(user)
                 .build();
-        chatParticipantRepository.save(chatParticipant);
+            chatParticipantRepository.save(chatParticipant);
+        }
     }
 
     @Transactional

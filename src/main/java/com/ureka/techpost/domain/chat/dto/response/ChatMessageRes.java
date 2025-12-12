@@ -19,4 +19,5 @@ public class ChatMessageRes {
 
     private String message;
     private String senderName;
+    private String senderId;
 }
