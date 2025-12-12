@@ -80,6 +80,7 @@ public class ChatService {
         chatParticipantRepository.save(chatParticipant);
     }
 
+    @Transactional
     public List<ChatMessageRes> getChatHistory(Long roomId, CustomUserDetails userDetails) {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new EntityNotFoundException("room cannot be found"));
