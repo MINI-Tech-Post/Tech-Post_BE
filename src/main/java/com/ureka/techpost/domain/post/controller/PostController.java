@@ -56,9 +56,9 @@ public class PostController {
 
     @Operation(summary = "게시글 상세 조회", description = "게시글 ID(PK)를 이용하여 특정 게시글의 상세 정보를 조회합니다.")
     @GetMapping("/{postId}")
-    public ApiResponse<PostResponseDTO> getPost(@Parameter(description = "조회할 게시글의 ID") @PathVariable Long postId){
+    public ApiResponse<PostResponseDTO> getPost(@Parameter(description = "조회할 게시글의 ID") @PathVariable Long postId, @AuthenticationPrincipal CustomUserDetails userDetails){
 
-        return ApiResponse.onSuccess(postService.findById(postId));
+        return ApiResponse.onSuccess(postService.findById(postId, userDetails));
     }
 
     @Operation(summary = "게시글 삭제", description = "게시글 ID와 로그인한 유저 정보를 비교하여 본인의 게시글을 삭제합니다.")
