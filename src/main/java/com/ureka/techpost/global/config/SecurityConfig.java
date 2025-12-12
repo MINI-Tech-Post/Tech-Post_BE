@@ -34,7 +34,6 @@ public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
-    private final TokenService tokenService;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
@@ -98,7 +97,7 @@ public class SecurityConfig {
                         .failureHandler(authenticationFailureHandler)
                 )
 
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userRepository, tokenService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
 
 
         return http.build();

@@ -4,6 +4,7 @@ package com.ureka.techpost.domain.auth.handler;
 import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
 import com.ureka.techpost.domain.auth.jwt.JwtUtil;
 import com.ureka.techpost.domain.auth.service.TokenService;
+import com.ureka.techpost.domain.auth.utils.CookieUtil;
 import com.ureka.techpost.domain.user.entity.User;
 import com.ureka.techpost.domain.user.repository.UserRepository;
 import jakarta.servlet.ServletException;
@@ -45,7 +46,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         String refresh = jwtUtil.generateRefreshToken("refresh");
 
         tokenService.addRefreshToken(oAuth2User.getUser(), refresh);
-        response.addCookie(tokenService.createCookie("refresh", refresh));
+        response.addCookie(CookieUtil.createCookie("refresh", refresh, 1209600));
         
         // 액세스 토큰을 쿼리 파라미터에 담아 프론트엔드 URL로 리다이렉트
 		// vue.js 에서 지원하는 포트 번호로 변경해야 함
