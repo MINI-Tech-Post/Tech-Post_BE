@@ -1,5 +1,6 @@
 package com.ureka.techpost.domain.post.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PostResponseDTO {
     private Long id;
     private String title;
@@ -32,4 +34,32 @@ public class PostResponseDTO {
 
     private Long likeCount;
     private Long commentCount;
+    private Boolean isLiked;
+
+    public PostResponseDTO(
+        Long id,
+        String title,
+        String summary,
+        String originalUrl,
+        String thumbnailUrl,
+        String publisher,
+        LocalDateTime publishedAt,
+        String sourceName,
+        LocalDateTime createdAt,
+        Long likeCount,
+        Long commentCount
+    ) {
+        this.id = id;
+        this.title = title;
+        this.summary = summary;
+        this.originalUrl = originalUrl;
+        this.thumbnailUrl = thumbnailUrl;
+        this.publisher = publisher;
+        this.publishedAt = publishedAt;
+        this.sourceName = sourceName;
+        this.createdAt = createdAt;
+        this.likeCount = likeCount;
+        this.commentCount = commentCount;
+        this.isLiked = false;
+    }
 }

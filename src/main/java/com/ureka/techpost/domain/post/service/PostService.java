@@ -1,6 +1,8 @@
 package com.ureka.techpost.domain.post.service;
 
 import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
+import com.ureka.techpost.domain.likes.entity.Likes;
+import com.ureka.techpost.domain.likes.repository.LikesRepository;
 import com.ureka.techpost.domain.post.dto.PostResponseDTO;
 import com.ureka.techpost.domain.post.dto.PostRequestDTO;
 import com.ureka.techpost.domain.post.entity.Post;
@@ -23,11 +25,21 @@ import org.springframework.stereotype.Service;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final LikesRepository likesRepository;
 
-    public PostResponseDTO findById(Long id) {
-
-        return postRepository.findPostById(id)
+    public PostResponseDTO findById(Long id, CustomUserDetails userDetails) {
+        PostResponseDTO dto = postRepository.findPostById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글 없음"));
+
+        if (userDetails != null) {
+            Long userId = userDetails.getUser().getUserId();
+            boolean liked = likesRepository.existsByUserUserIdAndPostId(userId, id);
+            dto.setIsLiked(liked);
+        } else {
+            dto.setIsLiked(false);
+        }
+
+        return dto;
     }
 
     public void save(PostRequestDTO postRequestDTO, CustomUserDetails userDetails) {
