@@ -59,7 +59,7 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    public TokenDto login(LoginDto loginDto, HttpServletResponse response) {
+    public TokenDto login(LoginDto loginDto) {
 
         // 입력 데이터에서 username, password 꺼냄
         String username = loginDto.getUsername();
