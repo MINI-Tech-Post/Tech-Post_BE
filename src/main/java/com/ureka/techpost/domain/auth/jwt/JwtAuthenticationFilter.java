@@ -3,9 +3,11 @@ package com.ureka.techpost.domain.auth.jwt;
 import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
 import com.ureka.techpost.domain.user.entity.User;
 import com.ureka.techpost.domain.user.repository.UserRepository;
-import com.ureka.techpost.domain.auth.service.TokenService;
 import com.ureka.techpost.global.exception.CustomException;
 import com.ureka.techpost.global.exception.ErrorCode;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,17 +17,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
 /**
+ * @file JwtAuthenticationFilter.java
  * @author 김동혁, 구본문
  * @version 1.0
- * @file JwtAuthenticationFilter.java
- * @description 이 파일은 모든 API 요청이 올 때마다 가장 먼저 실행되어 토큰 검사하는 클래스입니다.
  * @since 2025-12-08
+ * @description 이 파일은 모든 API 요청이 올 때마다 가장 먼저 실행되어 토큰 검사하는 클래스입니다.
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -37,8 +38,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestURI = request.getRequestURI();
-        // reissue 요청은 헤더에 access 토큰이 아닌 refresh 토큰이 필요하기 때문에,
-        // JwtAuthenticationFilter의 검증 로직을 건너뛰어야 함
         return requestURI.equals("/api/auth/reissue");
     }
 
@@ -54,14 +53,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 토큰 유효성 검증 (실패 시 즉시 종료)
-        if (!validateToken(response, accessToken)) {
-            return;
-        }
-
-        // 인증 처리
-        if (!authenticateUser(response, accessToken)) {
-            return;
+        try {
+            validateToken(accessToken);
+            authenticateUser(accessToken);
+        } catch (CustomException e) {
+            request.setAttribute("exception", e.getErrorCode());
+        } catch (SignatureException | MalformedJwtException e) {
+            request.setAttribute("exception", ErrorCode.INVALID_TOKEN);
+        } catch (ExpiredJwtException e) {
+            request.setAttribute("exception", ErrorCode.ACCESS_TOKEN_EXPIRED);
+        } catch (Exception e) {
+            log.error("Unhandled exception in JwtFilter", e);
+            request.setAttribute("exception", ErrorCode.INVALID_TOKEN);
         }
 
         // 다음 필터로 진행
@@ -76,62 +79,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private boolean validateToken(HttpServletResponse response, String accessToken) throws IOException {
+    private void validateToken(String accessToken) {
         // 토큰 만료 여부 확인
         if (jwtUtil.isExpired(accessToken)) {
-            log.warn("[JwtFilter] expired access token");
-            sendError(response, 401, "액세스 토큰 만료");
-            return false;
+            throw new CustomException(ErrorCode.ACCESS_TOKEN_EXPIRED);
         }
 
         // 토큰 카테고리 확인
         String category = jwtUtil.getCategory(accessToken);
         if (!"access".equals(category)) {
-            log.warn("[JwtFilter] invalid token category: {}", category);
-            sendError(response, 401, "카테고리 까보니 액세스토큰이 아님");
-            return false;
+            throw new CustomException(ErrorCode.INVALID_TOKEN_CATEGORY);
         }
-
-        return true;
     }
 
-    private boolean authenticateUser(HttpServletResponse response, String accessToken) throws IOException {
-        // 토큰에서 username 추출
-        String username;
-        try {
-            username = jwtUtil.getUsernameFromToken(accessToken);
-        } catch (Exception e) {
-            log.warn("[JwtFilter] token parsing failed", e);
-            sendError(response, 401, "유효하지 않은 토큰입니다.");
-            return false;
-        }
+    private void authenticateUser(String accessToken) {
+        String username = jwtUtil.getUsernameFromToken(accessToken);
 
-        // DB에서 사용자 조회
         User foundUser = userRepository.findByUsername(username)
-                .orElse(null);
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-        if (foundUser == null) {
-            log.warn("[JwtFilter] user not found. username={}", username);
-            sendError(response, 401, "[회원이 존재하지 않습니다.");
-            return false;
-        }
-
-        // UserDetails 객체 생성
         CustomUserDetails customUserDetails = new CustomUserDetails(foundUser);
-
-        // 인증 토큰 생성
         Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
-
-        // SecurityContext에 설정
         SecurityContextHolder.getContext().setAuthentication(authToken);
-
-        return true;
-
-    }
-
-    private void sendError(HttpServletResponse response, int status, String msg) throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"message\":\"" + msg + "\"}");
     }
 }
