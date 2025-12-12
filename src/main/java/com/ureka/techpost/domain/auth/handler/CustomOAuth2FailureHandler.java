@@ -20,7 +20,7 @@ import java.io.IOException;
  */
 
 @Component
-public class CustomAuthenticationFailureHandler implements AuthenticationFailureHandler {
+public class CustomOAuth2FailureHandler implements AuthenticationFailureHandler {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -31,14 +31,20 @@ public class CustomAuthenticationFailureHandler implements AuthenticationFailure
             AuthenticationException exception
     ) throws IOException {
 
+        // 예외 메시지 추출 (OAuth2AuthenticationException 또는 기타 AuthenticationException)
+        String errorMessage = exception.getMessage() != null
+                ? exception.getMessage()
+                : "소셜 로그인에 실패했습니다.";
+
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.UNAUTHORIZED)
-                .code("LOGIN_FAILED")
-                .message("로그인에 실패했습니다.")
+                .code("OAUTH2_LOGIN_FAILED")
+                .message(errorMessage)
                 .build();
 
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType("application/json;charset=UTF-8");
+
         objectMapper.writeValue(response.getWriter(), errorResponse);
     }
 }
