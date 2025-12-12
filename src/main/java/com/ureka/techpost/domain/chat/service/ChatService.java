@@ -41,7 +41,7 @@ public class ChatService {
       List<ChatRoomRes> chatRoomResList = new ArrayList<>();
 
       for (ChatRoom chatRoom : chatRoomList)
-        chatRoomResList.add(ChatRoomRes.from(chatRoom));
+        chatRoomResList.add(ChatRoomRes.from(chatRoom, chatParticipantRepository.countByChatRoomId(chatRoom.getId())));
 
       return chatRoomResList;
     }
@@ -107,7 +107,7 @@ public class ChatService {
     public List<ChatRoomRes> getMyChatRoomList(CustomUserDetails userDetails) {
         return chatParticipantRepository.findAllWithChatRoomByUserId(userDetails.getUser().getUserId())
                 .stream()
-                .map(chatParticipant -> ChatRoomRes.from(chatParticipant.getChatRoom()))
+                .map(chatParticipant -> ChatRoomRes.from(chatParticipant.getChatRoom(), chatParticipantRepository.countByChatRoomId(chatParticipant.getChatRoom().getId())))
                 .toList();
     }
 

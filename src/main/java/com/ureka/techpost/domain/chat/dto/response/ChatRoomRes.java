@@ -23,10 +23,13 @@ public class ChatRoomRes {
 
   private String roomName;
 
-  public static ChatRoomRes from(ChatRoom chatRoom) {
+  private Long participantCount;
+
+  public static ChatRoomRes from(ChatRoom chatRoom, long participantCount) {
     return ChatRoomRes.builder()
         .roomId(chatRoom.getId())
         .roomName(chatRoom.getRoomName())
+        .participantCount(participantCount)
         .build();
   }
 }
