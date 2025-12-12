@@ -58,7 +58,7 @@ class CustomHandlersTest {
     @Test
     // AuthenticationFailureHandler: 로그인 실패 시 401 코드와 JSON 응답을 반환하는지 검증
     void failureHandler_returnsUnauthorizedJson() throws Exception {
-        var failureHandler = new CustomAuthenticationFailureHandler();
+        var failureHandler = new CustomOAuth2FailureHandler();
         var request = new MockHttpServletRequest();
         var response = new MockHttpServletResponse();
 
@@ -71,7 +71,7 @@ class CustomHandlersTest {
         // 기대: 바디의 status/code/message 필드가 존재하고 값이 비어 있지 않음
         JsonNode body = OBJECT_MAPPER.readTree(response.getContentAsString());
         assertEquals("UNAUTHORIZED", body.get("status").asText());
-        assertEquals("LOGIN_FAILED", body.get("code").asText());
+        assertEquals("OAUTH2_LOGIN_FAILED", body.get("code").asText());
         assertFalse(body.get("message").asText().isBlank());
     }
 }

@@ -29,35 +29,18 @@ public class TokenService {
 
     // DB에 Refresh 토큰 저장 (Redis)
     public void addRefreshToken(User user, String refresh) {
-        // Redis에 저장할 객체 생성
-        // @Id 필드(id)에 user.getUsername()을 사용하여, 사용자별로 하나의 리프레시 토큰만 유지하도록 할 수 있음
-        // 또는 refresh 값을 id로 사용하여 다중 로그인을 허용할 수도 있음. 여기서는 username을 키로 사용.
+
         RefreshToken refreshToken = RefreshToken.builder()
-                .id(user.getUsername()) // Key: username
-                .username(user.getUsername())
-                .tokenValue(refresh)
-                .build();
+				.tokenValue(refresh) // Key: refresh token value
+				.username(user.getUsername())
+				.build();
 
         refreshTokenRepository.save(refreshToken);
     }
 
-    // 쿠키 생성
-    public Cookie createCookie(String key, String value) {
-        Cookie cookie = new Cookie(key, value);
-        cookie.setMaxAge(1209600); // 14일 (리프레시 토큰 유효기간과 일치)
-        cookie.setHttpOnly(true);
-        return cookie;
-    }
-
-    // DB에 Refresh 토큰이 존재하는지 확인 (Redis)
-    public Boolean existsByTokenValue(String tokenValue) {
-        // @Indexed 된 필드로 조회
-        return refreshTokenRepository.findByTokenValue(tokenValue).isPresent();
-    }
-
     // DB에서 Refresh 토큰을 삭제 (Redis)
     public void deleteByTokenValue(String tokenValue) {
-        refreshTokenRepository.deleteByTokenValue(tokenValue);
+        refreshTokenRepository.deleteById(tokenValue);
     }
 
     // 리프레시 토큰 검증
@@ -66,39 +49,17 @@ public class TokenService {
             throw new CustomException(ErrorCode.REFRESH_TOKEN_MISSING);
         }
 
-        try {
-            jwtUtil.isExpired(token);
-        } catch (ExpiredJwtException e) {
-            throw new CustomException(ErrorCode.REFRESH_TOKEN_EXPIRED);
-        }
+		if (jwtUtil.isExpired(token)) {
+			throw new CustomException(ErrorCode.REFRESH_TOKEN_EXPIRED);
+		}
 
         String category = jwtUtil.getCategory(token);
         if (!category.equals("refresh")) {
             throw new CustomException(ErrorCode.INVALID_TOKEN_CATEGORY);
         }
 
-        if (!existsByTokenValue(token)) {
+        if (!refreshTokenRepository.existsById(token)) {
             throw new CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
     }
-
-    // 액세스 토큰 검증
-    public void validateAccessToken(String token) {
-        if (token == null) {
-            throw new CustomException(ErrorCode.ACCESS_TOKEN_MISSING);
-        }
-
-        try {
-            jwtUtil.isExpired(token);
-        } catch (ExpiredJwtException e) {
-            throw new CustomException(ErrorCode.ACCESS_TOKEN_EXPIRED);
-        }
-
-        String category = jwtUtil.getCategory(token);
-        if (!category.equals("access")) {
-            throw new CustomException(ErrorCode.INVALID_TOKEN_CATEGORY);
-        }
-
-    }
-
 }

@@ -4,6 +4,8 @@ import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
 import com.ureka.techpost.domain.user.entity.User;
 import com.ureka.techpost.domain.user.repository.UserRepository;
 import com.ureka.techpost.domain.auth.service.TokenService;
+import com.ureka.techpost.global.exception.CustomException;
+import com.ureka.techpost.global.exception.ErrorCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,68 +33,76 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
-    private final TokenService tokenService;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         // reissue 요청은 헤더에 access 토큰이 아닌 refresh 토큰이 필요하기 때문에,
         // JwtAuthenticationFilter의 검증 로직을 건너뛰어야 함
-        return requestURI.equals("/api/auth/reissue") || requestURI.equals("/api/auth/signup") || requestURI.equals("/api/auth/login");
+        return requestURI.equals("/api/auth/reissue");
     }
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        log.info("[JwtAuthFilter] doFilterInternal");
-        
-        // 요청 헤더에서 Authorization 키의 값(토큰) 추출
+
+		// 토큰 추출
+		String accessToken = resolveToken(request);
+
+		// 토큰이 없으면 다음 필터로 진행
+		if (accessToken == null) {
+			filterChain.doFilter(request, response);
+			return;
+		}
+
+		// 토큰 유효성 검증 (실패 시 즉시 종료)
+		validateToken(response, accessToken);
+
+		// 인증 처리
+		authenticateUser(accessToken);
+
+		// 다음 필터로 진행
+		filterChain.doFilter(request, response);
+	}
+
+	private String resolveToken(HttpServletRequest request) {
 		String authorization = request.getHeader("Authorization");
+		if (authorization != null && authorization.startsWith("Bearer ")) {
+			return authorization.split(" ")[1];
+		}
+		return null;
+	}
 
-        // 토큰이 없거나, Bearer 타입이 아니면 필터 통과 (인증 실패 처리됨)
-        if (authorization == null || !authorization.startsWith("Bearer ")) {
-            log.warn("JWT 토큰 없음");
-            filterChain.doFilter(request, response);
-            return;
-        }
+	private void validateToken(HttpServletResponse response, String accessToken) throws IOException {
+		// 토큰 만료 여부 확인
+		if (jwtUtil.isExpired(accessToken)) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			throw new CustomException(ErrorCode.ACCESS_TOKEN_MISSING);
+		}
 
-        // "Bearer " 접두사를 제거하고 순수 토큰 값만 추출
-        String accessToken = authorization.split(" ")[1];
+		// 토큰 카테고리 확인
+		String category = jwtUtil.getCategory(accessToken);
+		if (!"access".equals(category)) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			throw new CustomException(ErrorCode.INVALID_TOKEN_CATEGORY);
+		}
+	}
 
-        // 토큰 유효성 검증 (만료 여부, 위조 여부 등 확인)
-        // 유효하지 않으면 예외가 발생하여 GlobalExceptionHandler가 처리
-        tokenService.validateAccessToken(accessToken);
+	private void authenticateUser(String accessToken) {
+		// 토큰에서 username 추출
+		String username = jwtUtil.getUsernameFromToken(accessToken);
 
-        // 토큰에서 사용자 이름(username) 추출
-        String username = jwtUtil.getUsernameFromToken(accessToken);
+		// DB에서 사용자 조회
+		User foundUser = userRepository.findByUsername(username)
+				.orElseThrow(() -> new UsernameNotFoundException("회원이 존재하지 않습니다."));
 
-        // 추출한 username으로 DB에서 실제 사용자 정보 조회
-        // (토큰에는 비밀번호 같은 민감한 정보가 없으므로 DB 조회가 필요할 수 있음)
-        User foundUser = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("회원이 존재하지 않습니다."));
+		// UserDetails 객체 생성
+		CustomUserDetails customUserDetails = new CustomUserDetails(foundUser);
 
-        // 인증 객체(Authentication) 생성을 위한 임시 User 객체 생성
-        // 비밀번호는 이미 토큰 검증을 통과했으므로 임의의 값으로 설정
-        User user = User.builder()
-				.userId(foundUser.getUserId())
-                .username(username)
-                .password("temppassword")
-                .name(foundUser.getName())
-                .role(foundUser.getRole())
-                .provider("NONE")
-                .providerId(null)
-                .build();
+		// 인증 토큰 생성
+		Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
 
-        // UserDetails 객체 생성 (Spring Security가 사용하는 사용자 정보 객체)
-        CustomUserDetails customUserDetails = new CustomUserDetails(user);
+		// SecurityContext에 설정
+		SecurityContextHolder.getContext().setAuthentication(authToken);
 
-        // 스프링 시큐리티 인증 토큰 생성
-        Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
-
-        // 세션(Security Context)에 인증 정보 등록
-        // 이 요청이 끝날 때까지만 인증된 상태로 유지됨 (Stateless)
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-
-        // 다음 필터로 진행
-        filterChain.doFilter(request, response);
 	}
 }

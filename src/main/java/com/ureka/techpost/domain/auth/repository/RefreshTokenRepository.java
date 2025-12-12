@@ -16,12 +16,5 @@ import java.util.Optional;
 @Repository
 public interface RefreshTokenRepository extends CrudRepository<RefreshToken, String> {
 
-    // @Indexed로 지정된 필드는 findBy 구문으로 조회 가능
-    Optional<RefreshToken> findByTokenValue(String tokenValue);
-
-    // CrudRepository는 기본적으로 Key(@Id) 기반 조회만 빠르고, Indexed 필드 조회는 보조 인덱스를 사용함.
-    
     Optional<RefreshToken> findByUsername(String username);
-
-    void deleteByTokenValue(String tokenValue);
 }

@@ -63,39 +63,47 @@ public class JwtUtil {
                 .compact();
     }
 
-    // JWT로부터 subject를 꺼내서 username 확인
+	// JWT로부터 subject를 꺼내서 확인
 	public String getUsernameFromToken(String token) {
-		return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject();
+		return parseClaims(token).getSubject();
 	}
 
-    // JWT로부터 role claim 추출
+	// JWT로부터 role claim 추출
 	public String getRoleFromToken(String token) {
-		return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("role", String.class);
+		return parseClaims(token).get("role", String.class);
 	}
 
-    // JWT로부터 category 추출 (access, refresh 구분)
+	// JWT로부터 category 추출 (access, refresh 구분)
 	public String getCategory(String token) {
-		return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("category", String.class);
+		return parseClaims(token).get("category", String.class);
 	}
 
-    // 토큰이 만료되었으면 true, 아니면 false
+	// 토큰이 만료되었으면 true, 아니면 false
 	public Boolean isExpired(String token) {
-		return Jwts.parser().verifyWith(key).build().parseSignedClaims(token)
-				.getPayload().getExpiration().before(new Date());
+		try {
+			parseClaims(token);
+			return false;
+		} catch (ExpiredJwtException e) {
+			return true;
+		}
 	}
 
 	// 만료된 토큰에서 username 추출
 	public String getUsernameFromExpirationToken(String token) {
 		try {
-			return Jwts.parser()
-					.verifyWith(key)
-					.build()
-					.parseSignedClaims(token)
-					.getPayload()
-					.getSubject();
+			return parseClaims(token).getSubject();
 		} catch (ExpiredJwtException e) {
 			// 만료된 토큰이어도 일단 내부 정보 반환(재발급 시 사용자 정보가 필요할 수 있음)
 			return e.getClaims().getSubject();
 		}
+	}
+
+	// 토큰 파싱 공통 메서드
+	private Claims parseClaims(String token) {
+		return Jwts.parser()
+				.verifyWith(key)
+				.build()
+				.parseSignedClaims(token)
+				.getPayload();
 	}
 }

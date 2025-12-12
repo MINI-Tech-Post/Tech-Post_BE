@@ -20,13 +20,11 @@ import org.springframework.data.redis.core.index.Indexed;
 @RedisHash(value = "refreshToken", timeToLive = 1209600)
 public class RefreshToken {
 
-    @Id
-    private String id; // Redis Key (일반적으로 username이나 userId 사용)
+	@Id
+	private String tokenValue; // 리프레시 토큰 값 (Key)
 
-    @Indexed
-    private String tokenValue; // 리프레시 토큰 값 (조회용 인덱스)
-
-    private String username; // 사용자 식별자
+	@Indexed
+	private String username; // 사용자 식별자 (필요 시 전체 로그아웃을 위해 인덱스 설정)
 
     public void updateToken(String tokenValue) {
         this.tokenValue = tokenValue;

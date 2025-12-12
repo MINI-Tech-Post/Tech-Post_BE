@@ -2,7 +2,9 @@ package com.ureka.techpost.domain.auth.controller;
 
 import com.ureka.techpost.domain.auth.dto.LoginDto;
 import com.ureka.techpost.domain.auth.dto.SignupDto;
+import com.ureka.techpost.domain.auth.entity.TokenDto;
 import com.ureka.techpost.domain.auth.service.AuthService;
+import com.ureka.techpost.domain.auth.utils.CookieUtil;
 import com.ureka.techpost.global.apiPayload.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,7 +45,20 @@ public class AuthController {
 	public ApiResponse<?> reissue(
 			@Parameter(hidden = true) HttpServletRequest request,
 			@Parameter(hidden = true) HttpServletResponse response) {
-		return ApiResponse.onSuccess(authService.reissue(request, response));
+
+		// Request에서 토큰 추출
+		String authorization = request.getHeader("Authorization");
+		String accessToken = (authorization != null && authorization.startsWith("Bearer ")) ? authorization.split(" ")[1] : null;
+		String refreshToken = CookieUtil.getCookieValue(request, "refresh");
+
+		// 서비스 호출
+		TokenDto tokenDto = authService.reissue(accessToken, refreshToken);
+
+		// Response 설정 (헤더 + 쿠키)
+		response.setHeader("Authorization", "Bearer " + tokenDto.getAccessToken());
+		response.addCookie(CookieUtil.createCookie("refresh", tokenDto.getRefreshToken(), 1209600));
+
+		return ApiResponse.onSuccess("재발급 성공");
 	}
 
 	@Operation(summary = "로그인", description = "사용자 이름과 비밀번호로 로그인하여 Access Token 및 Refresh Token을 발급받습니다.")
@@ -52,7 +67,13 @@ public class AuthController {
 			@Parameter(description = "로그인 요청 데이터 (아이디, 비밀번호)", required = true)
 			@Valid @RequestBody LoginDto loginDto,
 			@Parameter(hidden = true) HttpServletResponse response) {
-		authService.login(loginDto, response);
+		// 서비스 호출
+		TokenDto tokenDto = authService.login(loginDto);
+
+		// Response 설정
+		response.setHeader("Authorization", "Bearer " + tokenDto.getAccessToken());
+		response.addCookie(CookieUtil.createCookie("refresh", tokenDto.getRefreshToken(), 1209600));
+
 		return ApiResponse.onSuccess("로그인 성공");
 	}
 
@@ -61,7 +82,15 @@ public class AuthController {
 	public ResponseEntity<String> logout(
 			@Parameter(hidden = true) HttpServletRequest request,
 			@Parameter(hidden = true) HttpServletResponse response) {
-		authService.logout(request, response);
+		// 쿠키에서 리프레시 토큰 추출
+		String refreshToken = CookieUtil.getCookieValue(request, "refresh");
+
+		// 서비스 호출 (DB 삭제)
+		authService.logout(refreshToken);
+
+		// 클라이언트 쿠키 삭제 (항상 수행)
+		CookieUtil.deleteCookie(response, "refresh");
+
 		return ResponseEntity.ok("로그아웃 성공");
 	}
 }
