@@ -39,7 +39,8 @@ public class SecurityConfig {
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
 
 	static final String[] WHITE_LIST = {"/swagger-ui/**",
-			"/v3/api-docs/**",
+            "/swagger-ui.html",
+            "/v3/api-docs/**",
 			"/swagger-resources/**",
 			"/health",
 			"/", "/actuator/**", "/login", "/signup", "/css/**", "/js/**", "/oauth2/**",
@@ -55,7 +56,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000" , "http://127.0.0.1:3000", "https://techpost.store"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Collections.singletonList("*"));
         configuration.setAllowCredentials(true);

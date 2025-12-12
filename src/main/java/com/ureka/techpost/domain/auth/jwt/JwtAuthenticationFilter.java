@@ -36,7 +36,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        // 헬스체크 및 public URL
+
+        // Swagger UI & 문서 경로
+        if (uri.startsWith("/swagger-ui") ||
+                uri.startsWith("/v3/api-docs") ||
+                uri.startsWith("/swagger-resources") ||
+                uri.startsWith("/webjars")) {
+            return true;
+        }
+
+        // Auth 관련 public 경로
         if (uri.equals("/") ||
                 uri.startsWith("/health") ||
                 uri.startsWith("/actuator") ||
@@ -49,7 +58,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return false;
     }
 
-	@Override
+
+
+    @Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         log.info("[JwtAuthFilter] doFilterInternal");
         
