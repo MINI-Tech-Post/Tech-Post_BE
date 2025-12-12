@@ -59,25 +59,87 @@ public class AuthService {
         userRepository.save(user);
     }
 
+<<<<<<< HEAD
+	public void login(LoginDto loginDto, HttpServletResponse response) {
+=======
 	public TokenDto login(LoginDto loginDto) {
 		// 입력 데이터에서 username, password 꺼냄
 		String username = loginDto.getUsername();
 		String password = loginDto.getPassword();
+>>>>>>> 592d087eae5f80179e60ce34369d59d4450934a8
 
-		// 로그인을 위한 Spring Security 인증 토큰 생성
-		UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, password, null);
+        log.info("🔐 [LOGIN] 로그인 요청 도착 - username={}, password 입력 여부={}",
+                loginDto.getUsername(),
+                (loginDto.getPassword() != null));
 
-		// AuthenticationManager를 통해 사용자 인증 시도
-		// 인증 성공 시, 사용자 정보(Principal)와 권한(Authorities)을 포함한 Authentication 객체 반환
-		Authentication authentication = authenticationManager.authenticate(authToken);
+        // 입력 데이터에서 username, password 꺼냄
+        String username = loginDto.getUsername();
+        String password = loginDto.getPassword();
+        log.debug("🔍 [LOGIN] username={}, passwordLength={}",
+                username, password != null ? password.length() : 0);
 
-		// 사용자 추출
-		CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+        // Spring Security 인증 토큰 생성
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(username, password, null);
 
-		// JWT 액세스 토큰 및 리프레시 토큰 생성
-		String access = jwtUtil.generateAccessToken("access", user.getUsername(), user.getUser().getName(), user.getUser().getRoleName());
-		String refresh = jwtUtil.generateRefreshToken("refresh");
+        log.info("🔑 [LOGIN] 인증 토큰 생성 완료 - authToken={}", authToken);
 
+<<<<<<< HEAD
+        Authentication authentication;
+        try {
+            // AuthenticationManager를 통해 사용자 인증 시도
+            authentication = authenticationManager.authenticate(authToken);
+            log.info("✅ [LOGIN] 인증 성공 - principal={}, authorities={}",
+                    authentication.getPrincipal(),
+                    authentication.getAuthorities());
+        } catch (Exception e) {
+            log.error("❌ [LOGIN] 인증 실패 - username={}, error={}", username, e.getMessage(), e);
+            throw e; // 에러 다시 던짐
+        }
+
+        // 사용자 추출
+        CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+        log.info("👤 [LOGIN] 사용자 정보 로드 완료 - userId={}, username={}, role={}",
+                user.getUser(),
+                user.getUser().getUsername(),
+                user.getUser().getRoleName());
+
+        // JWT 액세스 토큰 및 리프레시 토큰 생성
+        String access = jwtUtil.generateAccessToken(
+                "access",
+                user.getUsername(),
+                user.getUser().getName(),
+                user.getUser().getRoleName()
+        );
+        log.info("🔐 [TOKEN] Access Token 생성 완료 - tokenLength={}", access.length());
+
+        String refresh = jwtUtil.generateRefreshToken("refresh");
+        log.info("🔄 [TOKEN] Refresh Token 생성 완료 - tokenLength={}", refresh.length());
+
+        // 리프레시 토큰 DB 저장
+        try {
+            tokenService.addRefreshToken(user.getUser(), refresh);
+            log.info("💾 [TOKEN] Refresh Token DB 저장 성공 - userId={}", user.getUser());
+        } catch (Exception e) {
+            log.error("❌ [TOKEN] Refresh Token DB 저장 실패 - userId={}, error={}",
+                    user.getUser(), e.getMessage(), e);
+            throw e;
+        }
+
+        // AccessToken → Response Header 전달
+        response.setHeader("Authorization", "Bearer " + access);
+        log.info("📤 [RESPONSE] Authorization 헤더에 Access Token 추가 완료");
+
+        // RefreshToken → HttpOnly 쿠키로 전달
+        Cookie refreshCookie = tokenService.createCookie("refresh", refresh);
+        response.addCookie(refreshCookie);
+        log.info("📤 [RESPONSE] Refresh Token 쿠키 추가 완료 - cookieName={}, maxAge={}",
+                refreshCookie.getName(), refreshCookie.getMaxAge());
+
+        // HTTP 응답 상태 설정
+        response.setStatus(HttpStatus.OK.value());
+        log.info("✅ [LOGIN] 로그인 프로세스 완료 - username={}", username);
+=======
 		// 새로 발급된 리프레시 토큰을 DB에 저장
 		tokenService.addRefreshToken(user.getUser(), refresh);
 
@@ -85,6 +147,7 @@ public class AuthService {
 				.accessToken(access)
 				.refreshToken(refresh)
 				.build();
+>>>>>>> 592d087eae5f80179e60ce34369d59d4450934a8
 	}
 
 	// 토큰 재발급
