@@ -35,8 +35,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
     // DB & Redis
-    runtimeOnly 'com.h2database:h2'
-    implementation 'com.mysql:mysql-connector-j'
+    runtimeOnly 'com.mysql:mysql-connector-j'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     // Swagger
@@ -57,7 +56,6 @@ dependencies {
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation 'com.h2database:h2'
 
     // QueryDSL
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'

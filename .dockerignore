@@ -1,0 +1,9 @@
+.git
+.gradle
+#build
+out
+.idea
+*.iml
+**/node_modules
+.DS_Store
+# 포인트: docker build context가 줄어들어서 ECR 빌드/푸시 시간이 줄어드는 편입니다.

@@ -43,10 +43,6 @@ out/
 ### Mac OS ###
 .DS_Store
 
-### application ###
-/src/main/resources/application-dev.yml
-/src/main/resources/application-prod.yml
-
 # QueryDSL generated sources
 src/main/generated/
 
