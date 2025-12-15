@@ -10,6 +10,8 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    networks:
+      - doyeon
 
   app:
     image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
@@ -29,6 +31,12 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+    networks:
+      - doyeon
 
 volumes:
   redis-data:
+
+networks:
+  doyeon:
+    external: true

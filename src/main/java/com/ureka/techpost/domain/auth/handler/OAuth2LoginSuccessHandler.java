@@ -3,7 +3,7 @@ package com.ureka.techpost.domain.auth.handler;
 
 import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
 import com.ureka.techpost.domain.auth.jwt.JwtUtil;
-import com.ureka.techpost.domain.auth.service.TokenService;
+//import com.ureka.techpost.domain.auth.service.TokenService;
 import com.ureka.techpost.domain.auth.utils.CookieUtil;
 import com.ureka.techpost.domain.user.entity.User;
 import com.ureka.techpost.domain.user.repository.UserRepository;
@@ -34,7 +34,7 @@ import java.util.Iterator;
 public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtUtil jwtUtil;
-    private final TokenService tokenService;
+    //private final TokenService tokenService;
     private final UserRepository userRepository;
 
     @Override
@@ -45,7 +45,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         String access = jwtUtil.generateAccessToken("access", oAuth2User.getUsername(), oAuth2User.getUser().getName(), oAuth2User.getUser().getRoleName());
         String refresh = jwtUtil.generateRefreshToken("refresh");
 
-        tokenService.addRefreshToken(oAuth2User.getUser(), refresh);
+        //tokenService.addRefreshToken(oAuth2User.getUser(), refresh);
         response.addCookie(CookieUtil.createCookie("refresh", refresh, 1209600));
         
         // 액세스 토큰을 쿼리 파라미터에 담아 프론트엔드 URL로 리다이렉트
