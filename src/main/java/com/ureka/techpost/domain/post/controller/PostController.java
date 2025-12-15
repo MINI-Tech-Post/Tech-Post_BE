@@ -15,8 +15,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @file PostController.java
@@ -69,6 +72,12 @@ public class PostController {
         postService.deletePost(postId, userDetails);
 
         return ApiResponse.of(SuccessStatus._NO_CONTENT, null);
+    }
+
+    @Operation(summary = "인기글", description = "좋아요 순으로 상위 10개의 게시물 List를 반환합니다.")
+    @GetMapping("/popular")
+    public ApiResponse<List<PostResponseDTO>> getPopularPosts() {
+        return ApiResponse.onSuccess(postService.getPopularPosts());
     }
 
 }

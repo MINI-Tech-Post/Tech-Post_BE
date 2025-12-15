@@ -6,6 +6,9 @@ import com.ureka.techpost.domain.user.repository.UserRepository;
 //import com.ureka.techpost.domain.auth.service.TokenService;
 import com.ureka.techpost.global.exception.CustomException;
 import com.ureka.techpost.global.exception.ErrorCode;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -56,11 +59,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			return;
 		}
 
-		// 토큰 유효성 검증 (실패 시 즉시 종료)
-		validateToken(response, accessToken);
-
-		// 인증 처리
-		authenticateUser(accessToken);
+		try {
+			validateToken(accessToken);
+			authenticateUser(accessToken);
+		} catch (CustomException e) {
+			request.setAttribute("exception", e.getErrorCode());
+		} catch (SignatureException | MalformedJwtException e) {
+			request.setAttribute("exception", ErrorCode.INVALID_TOKEN);
+		} catch (ExpiredJwtException e) {
+			request.setAttribute("exception", ErrorCode.ACCESS_TOKEN_EXPIRED);
+		} catch (Exception e) {
+			log.error("Unhandled exception in JwtFilter", e);
+			request.setAttribute("exception", ErrorCode.INVALID_TOKEN);
+		}
 
 		// 다음 필터로 진행
 		filterChain.doFilter(request, response);
@@ -74,17 +85,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		return null;
 	}
 
-	private void validateToken(HttpServletResponse response, String accessToken) throws IOException {
+	private void validateToken(String accessToken) throws IOException {
 		// 토큰 만료 여부 확인
 		if (jwtUtil.isExpired(accessToken)) {
-			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			throw new CustomException(ErrorCode.ACCESS_TOKEN_MISSING);
 		}
 
 		// 토큰 카테고리 확인
 		String category = jwtUtil.getCategory(accessToken);
 		if (!"access".equals(category)) {
-			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			throw new CustomException(ErrorCode.INVALID_TOKEN_CATEGORY);
 		}
 	}
@@ -95,7 +104,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 		// DB에서 사용자 조회
 		User foundUser = userRepository.findByUsername(username)
-				.orElseThrow(() -> new UsernameNotFoundException("회원이 존재하지 않습니다."));
+				.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
 		// UserDetails 객체 생성
 		CustomUserDetails customUserDetails = new CustomUserDetails(foundUser);

@@ -21,7 +21,7 @@ public class LikesController {
     public ApiResponse<Void> addLike(@PathVariable Long postId,
                                        @AuthenticationPrincipal CustomUserDetails userDetails){
 
-        likesService.addLike(postId, userDetails);
+        likesService.createLike(postId, userDetails);
 
         return ApiResponse.of(SuccessStatus._CREATED, null);
     }

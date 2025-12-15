@@ -24,7 +24,8 @@ public enum ErrorCode {
     REFRESH_TOKEN_MISSING(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 없습니다."),
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "만료된 리프레시 토큰입니다."),
     INVALID_TOKEN_CATEGORY(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰 타입입니다."),
-    REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "DB에 존재하지 않는 리프레시 토큰입니다.");//401
+    REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "DB에 존재하지 않는 리프레시 토큰입니다."),//401
+	INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다.");
 
     private final HttpStatus status;
     private final String message;

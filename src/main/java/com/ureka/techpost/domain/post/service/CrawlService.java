@@ -25,6 +25,7 @@ public class CrawlService {
 
     private final List<BaseCrawler> crawlers;
     private final PostRepository postRepository;
+    private final PostRedisService postRedisService;
 
     /**
      * 모든 크롤러를 실행하여 새로운 게시글 수집
@@ -77,7 +78,11 @@ public class CrawlService {
             return 0;
         }
 
-        postRepository.saveAll(posts);
+        List<Post> savedPosts = postRepository.saveAll(posts);
+
+        // 실시간 크롤링된 게시물 랭킹에 반영
+        postRedisService.addRankingBatch(savedPosts);
+
         return posts.size();
     }
 

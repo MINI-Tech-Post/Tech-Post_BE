@@ -8,11 +8,13 @@ import com.ureka.techpost.domain.comment.entity.Comment;
 import com.ureka.techpost.domain.comment.repository.CommentRepository;
 import com.ureka.techpost.domain.post.entity.Post;
 import com.ureka.techpost.domain.post.repository.PostRepository;
+import com.ureka.techpost.domain.post.service.PostRedisService;
 import com.ureka.techpost.domain.user.entity.User;
 import com.ureka.techpost.domain.user.repository.UserRepository;
 import com.ureka.techpost.global.exception.CustomException;
 import com.ureka.techpost.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +36,10 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final PostRedisService postRedisService;
 
     @Transactional
+    @CacheEvict(value = "postComments", key = "#postId")
     public void createComment(CommentRequestDTO commentRequestDTO, CustomUserDetails userDetails, Long postId){
 
         Post post = postRepository.findById(postId)
@@ -99,6 +103,11 @@ public class CommentService {
             throw new CustomException(ErrorCode.USER_NOT_MATCH);
         }
 
+        Long postId = comment.getPost().getId();
+
         commentRepository.delete(comment);
+
+        // 캐시 삭제 메서드 호출 (수동 Evict)
+        postRedisService.clearCommentCount(postId);
     }
 }

@@ -27,16 +27,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     @Query("SELECT new com.ureka.techpost.domain.post.dto.PostResponseDTO(" +
             "p.id, p.title, p.summary, p.originalUrl, p.thumbnailUrl, " +
             "p.publisher, p.publishedAt, p.sourceName, p.createdAt, " +
-            "(SELECT count(l) FROM Likes l WHERE l.post.id = p.id), " +
-            "(SELECT count(c) FROM Comment c WHERE c.post.id = p.id)) " +
-            "FROM Post p")
-    Page<PostResponseDTO> findPostList(Pageable pageable);
-
-    @Query("SELECT new com.ureka.techpost.domain.post.dto.PostResponseDTO(" +
-            "p.id, p.title, p.summary, p.originalUrl, p.thumbnailUrl, " +
-            "p.publisher, p.publishedAt, p.sourceName, p.createdAt, " +
-            "(SELECT count(l) FROM Likes l WHERE l.post.id = p.id), " +
-            "(SELECT count(c) FROM Comment c WHERE c.post.id = p.id)) " +
+            "0L, " +
+            "0L) " +
             "FROM Post p " +
             "WHERE p.id = :postId")
     Optional<PostResponseDTO> findPostById(@Param("postId") Long postId);
