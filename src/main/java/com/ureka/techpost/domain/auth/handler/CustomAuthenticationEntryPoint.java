@@ -1,6 +1,7 @@
 package com.ureka.techpost.domain.auth.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ureka.techpost.global.exception.ErrorCode;
 import com.ureka.techpost.global.exception.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,14 +30,26 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
             AuthenticationException authException
     ) throws IOException {
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-                .status(HttpStatus.UNAUTHORIZED)
-                .code("AUTHENTICATION_FAILED")
-                .message("인증에 실패했습니다.")
-                .build();
+		Object exception = request.getAttribute("exception");
+		ErrorResponse errorResponse;
 
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
-        response.setContentType("application/json;charset=UTF-8");
-        objectMapper.writeValue(response.getWriter(), errorResponse);
+		if (exception instanceof ErrorCode errorCode) {
+			errorResponse = ErrorResponse.builder()
+					.status(errorCode.getStatus())
+					.code(errorCode.name())
+					.message(errorCode.getMessage())
+					.build();
+			response.setStatus(errorCode.getStatus().value());
+		} else {
+			errorResponse = ErrorResponse.builder()
+					.status(HttpStatus.UNAUTHORIZED)
+					.code("AUTHENTICATION_FAILED")
+					.message("인증에 실패했습니다.")
+					.build();
+			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		}
+
+		response.setContentType("application/json;charset=UTF-8");
+		objectMapper.writeValue(response.getWriter(), errorResponse);
     }
 }

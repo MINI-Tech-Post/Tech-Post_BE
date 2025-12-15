@@ -5,6 +5,7 @@ import com.ureka.techpost.domain.auth.dto.LoginDto;
 import com.ureka.techpost.domain.auth.dto.SignupDto;
 import com.ureka.techpost.domain.auth.entity.TokenDto;
 import com.ureka.techpost.domain.auth.jwt.JwtUtil;
+import com.ureka.techpost.domain.auth.repository.RefreshTokenRepository;
 import com.ureka.techpost.domain.user.entity.User;
 import com.ureka.techpost.domain.user.repository.UserRepository;
 import com.ureka.techpost.global.exception.CustomException;
@@ -45,8 +46,9 @@ public class AuthService {
 	private final JwtUtil jwtUtil;
 	private final TokenService tokenService;
 	private final AuthenticationManager authenticationManager;
+	private final RefreshTokenRepository refreshTokenRepository;
 
-    // 회원가입
+	// 회원가입
     @Transactional
     public void signup(SignupDto signupDto) {
         // DB에 입력한 username이 존재하는지 확인
@@ -126,11 +128,16 @@ public class AuthService {
 	public void logout(String refreshToken) {
 		// 토큰이 존재하면 검증 및 DB 삭제 시도
 		if (refreshToken != null) {
+			if (refreshTokenRepository.existsById(refreshToken)) {
+				refreshTokenRepository.deleteById(refreshToken);
+				return;
+			}
+
 			try {
-				// 토큰 검증 (만료, 위조, DB 존재 여부 확인)
-				tokenService.validateRefreshToken(refreshToken);
-				// DB에서 Refresh 토큰 제거
-				tokenService.deleteByTokenValue(refreshToken);
+				String username = jwtUtil.getUsernameFromExpirationToken(refreshToken);
+
+				refreshTokenRepository.findByUsername(username)
+								.ifPresent(refreshTokenRepository::delete);
 			} catch (CustomException e) {
 				// 토큰이 유효하지 않거나(만료 등), 이미 DB에 없는 경우
 				// 로그아웃 과정이므로 무시
