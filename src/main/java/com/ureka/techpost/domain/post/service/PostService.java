@@ -11,6 +11,7 @@ import com.ureka.techpost.global.exception.CustomException;
 import com.ureka.techpost.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,7 @@ import java.util.List;
 /**
  * @file PostService.java
  * @author 최승언
- * @version 1.0
+ * @version 1.1
  * @since 2025-12-09
  * @description 게시글 등록, 조회, 검색, 삭제 등 게시글 도메인의 핵심 비즈니스 로직을 처리하는 서비스 클래스입니다.
  */
@@ -58,11 +59,63 @@ public class PostService {
 
     public Page<PostResponseDTO> search(String keyword, String publisher, Pageable pageable){
 
-        Page<PostResponseDTO> page = postRepository.search(keyword, publisher, pageable);
+        // DB에서 검색 조건에 맞는 ID 리스트만 조회
+        Page<Long> idPage = postRepository.searchIds(keyword, publisher, pageable);
+        List<Long> ids = idPage.getContent();
 
-        // 조회된 데이터 redis 캐싱
-        page.getContent().forEach((dto) -> postRedisService.savePostDtoToRedis(dto));
-        return page;
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // redis에 개싱된 데이터 조회
+        List<PostResponseDTO> cachedDtos = postRedisService.getPostDtoList(ids);
+
+        // redis에 없는 ID만 선별
+        List<Long> missingIds = new ArrayList<>();
+        for (int i = 0; i < ids.size(); i++) {
+            if (cachedDtos.get(i) == null) {
+                missingIds.add(ids.get(i));
+            }
+        }
+
+        // 캐시에 없는 데이터만 DB에서 상세 조회
+        if (!missingIds.isEmpty()) {
+            List<Post> missingPosts = postRepository.findAllById(missingIds);
+            // 조회 후 DTO 변환 및 Redis 저장
+            missingPosts.forEach(post -> {
+                PostResponseDTO dto = new PostResponseDTO(
+                        post.getId(),
+                        post.getTitle(),
+                        post.getSummary(),
+                        post.getOriginalUrl(),
+                        post.getThumbnailUrl(),
+                        post.getPublisher(),
+                        post.getPublishedAt(),
+                        post.getSourceName(),
+                        post.getCreatedAt(),
+                        0L,0L
+                        );
+
+                postRedisService.savePostDtoToRedis(dto); // Redis에 채워넣기
+
+                // cachedDtos 리스트의 null이었던 곳에 채워넣기
+                int index = ids.indexOf(post.getId());
+                if (index != -1) {
+                    cachedDtos.set(index, dto);
+                }
+            });
+        }
+
+        // 실시간 좋아요/댓글 최신화
+        cachedDtos.forEach(dto -> {
+            if (dto != null) {
+                dto.setCommentCount(postRedisService.getCommentCount(dto.getId()));
+                dto.setLikeCount(postRedisService.getLikeCount(dto.getId()));
+            }
+        });
+
+        // Page 객체로 다시 포장해서 반환
+        return new PageImpl<>(cachedDtos, pageable, idPage.getTotalElements());
     }
 
     public List<PostResponseDTO> getPopularPosts() {

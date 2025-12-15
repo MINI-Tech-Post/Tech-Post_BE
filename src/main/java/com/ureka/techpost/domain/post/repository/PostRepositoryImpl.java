@@ -22,7 +22,7 @@ import static com.ureka.techpost.domain.likes.entity.QLikes.likes;
 /**
  * @file PostRepositoryImpl.java
  * @author 최승언
- * @version 1.2
+ * @version 1.3
  * @since 2025-12-09
  * @description QueryDSL을 활용하여 게시글 검색, 필터링 등 복잡한 조회 로직을 실제로 구현한 클래스입니다.
  */
@@ -32,44 +32,23 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
-
+    // 검색 조건에 맞는 id 탐색
     @Override
-    public Page<PostResponseDTO> search(String keyword, String sourceName, Pageable pageable) {
+    public Page<Long> searchIds(String keyword, String sourceName, Pageable pageable) {
 
-        List<PostResponseDTO> content = queryFactory
-                .select(Projections.constructor(PostResponseDTO.class,
-                        post.id,
-                        post.title,
-                        post.summary,
-                        post.originalUrl,
-                        post.thumbnailUrl,
-                        post.publisher,
-                        post.publishedAt,
-                        post.sourceName,
-                        post.createdAt,
-                         ExpressionUtils.as(
-                                JPAExpressions.select(likes.count())
-                                        .from(likes)
-                                        .where(likes.post.eq(post)),
-                                "likeCount"),
-
-                         ExpressionUtils.as(
-                                JPAExpressions.select(comment.count())
-                                        .from(comment)
-                                        .where(comment.post.eq(post)),
-                                "commentCount")
-                ))
+        // ID만 Select
+        List<Long> ids = queryFactory
+                .select(post.id)
                 .from(post)
                 .where(
-                        titleOrSummaryContains(keyword), // 제목 or 요약
-                        sourceNameContains(sourceName)   // 출처
+                        titleOrSummaryContains(keyword),    // 제목 or 요약
+                        sourceNameContains(sourceName)      // 출처
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .orderBy(post.id.desc()) // 정렬
+                .orderBy(post.id.desc())                    // 정렬
                 .fetch();
 
-        // 카운트 쿼리
         JPAQuery<Long> countQuery = queryFactory
                 .select(post.count())
                 .from(post)
@@ -78,7 +57,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         sourceNameContains(sourceName)
                 );
 
-        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+        return PageableExecutionUtils.getPage(ids, pageable, countQuery::fetchOne);
     }
 
     // 제목 or 요약 키워드 검색

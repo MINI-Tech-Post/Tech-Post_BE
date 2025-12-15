@@ -21,6 +21,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * @file PostRedisService.java
+ * @author 최승언
+ * @version 1.1
+ * @since 2025-12-12
+ * @description redis에 캐싱하는 비즈니스 로직을 구현한 서비스 클래스입니다.
+ */
+
 @Service
 @RequiredArgsConstructor
 public class PostRedisService {
@@ -44,6 +52,21 @@ public class PostRedisService {
         if (cache != null) {
             cache.put(dbDto.getId(), dbDto);
         }
+    }
+
+    // 여러 ID의 DTO를 한 번에 조회
+    public List<PostResponseDTO> getPostDtoList(List<Long> postIds) {
+        List<String> keys = postIds.stream()
+                .map(id -> "posts::" + id)
+                .toList();
+
+        // MultiGet: 한 번의 통신으로 여러 키 조회
+        List<Object> results = redisTemplate.opsForValue().multiGet(keys);
+
+        // 결과를 DTO 리스트로 변환 (없으면 null이 들어있음)
+        return results.stream()
+                .map(obj -> (PostResponseDTO) obj)
+                .collect(Collectors.toList());
     }
 
     // 좋아요 수 가져오기
