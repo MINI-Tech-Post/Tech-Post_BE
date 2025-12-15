@@ -3,7 +3,7 @@ package com.ureka.techpost.domain.auth.jwt;
 import com.ureka.techpost.domain.auth.dto.CustomUserDetails;
 import com.ureka.techpost.domain.user.entity.User;
 import com.ureka.techpost.domain.user.repository.UserRepository;
-import com.ureka.techpost.domain.auth.service.TokenService;
+//import com.ureka.techpost.domain.auth.service.TokenService;
 import com.ureka.techpost.global.exception.CustomException;
 import com.ureka.techpost.global.exception.ErrorCode;
 import io.jsonwebtoken.ExpiredJwtException;

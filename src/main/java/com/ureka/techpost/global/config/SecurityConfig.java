@@ -7,7 +7,7 @@ import com.ureka.techpost.domain.auth.handler.OAuth2LoginSuccessHandler;
 import com.ureka.techpost.domain.auth.jwt.JwtAuthenticationFilter;
 import com.ureka.techpost.domain.auth.jwt.JwtUtil;
 import com.ureka.techpost.domain.auth.service.CustomOAuth2UserService;
-import com.ureka.techpost.domain.auth.service.TokenService;
+//import com.ureka.techpost.domain.auth.service.TokenService;
 import com.ureka.techpost.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

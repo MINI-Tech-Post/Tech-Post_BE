@@ -1,4 +1,4 @@
-version: "3.9"
+version: '3.9'
 
 services:
   mysql:
@@ -22,6 +22,7 @@ services:
   redis:
     image: redis:latest
     container_name: redis
+    restart: always
     ports:
       - "6379:6379"
     volumes:
