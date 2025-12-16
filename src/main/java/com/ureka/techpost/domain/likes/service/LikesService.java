@@ -25,7 +25,6 @@ public class LikesService {
     private final PostRedisService postRedisService;
 
     @Transactional
-    @CacheEvict(value = "postLikes", key = "#postId")
     public void createLike(Long postId, CustomUserDetails userDetails) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
@@ -45,10 +44,11 @@ public class LikesService {
 
         // 랭킹 점수 실시간 반영 (ZSet)
         postRedisService.incrementLikeRanking(postId);
+        // 게시글 표시용
+        postRedisService.incrementLikeCount(postId);
     }
 
     @Transactional
-    @CacheEvict(value = "postLikes", key = "#postId")
     public void deleteLike(Long postId, CustomUserDetails userDetails) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
@@ -66,5 +66,7 @@ public class LikesService {
 
         // 랭킹 점수 차감 (ZSet)
         postRedisService.decrementLikeRanking(postId);
+        // 게시글 표시용
+        postRedisService.decrementLikeCount(postId);
     }
 }

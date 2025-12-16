@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.DefaultTypedTuple;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
@@ -21,14 +22,27 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * @file PostRedisService.java
+ * @author 최승언
+ * @version 1.1
+ * @since 2025-12-12
+ * @description redis에 캐싱하는 비즈니스 로직을 구현한 서비스 클래스입니다.
+ */
+
 @Service
 @RequiredArgsConstructor
 public class PostRedisService {
 
     private final PostRepository postRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
     private final LikesRepository likesRepository;
     private final CommentRepository commentRepository;
+
+    // 객체(DTO) 저장용
+    private final RedisTemplate<String, Object> redisTemplate;
+    // 숫자(Count) 연산용
+    private final StringRedisTemplate stringRedisTemplate;
+
     private final CacheManager cacheManager;
 
     private static final String CACHE_POSTS = "posts";
@@ -46,72 +60,82 @@ public class PostRedisService {
         }
     }
 
+    // 여러 ID의 DTO를 한 번에 조회
+    public List<PostResponseDTO> getPostDtoList(List<Long> postIds) {
+        List<String> keys = postIds.stream()
+                .map(id -> CACHE_POSTS + "::" + id)
+                .toList();
+
+        // MultiGet: 한 번의 통신으로 여러 키 조회
+        List<Object> results = redisTemplate.opsForValue().multiGet(keys);
+
+        // 결과를 DTO 리스트로 변환 (없으면 null이 들어있음)
+        return results.stream()
+                .map(obj -> (PostResponseDTO) obj)
+                .collect(Collectors.toList());
+    }
+
+    // 키 생성 헬퍼 메서드
+    private String getLikeKey(Long postId) {
+        return CACHE_LIKES + "::" + postId;
+    }
+    private String getCommentKey(Long postId) {
+        return CACHE_COMMENTS + "::" + postId;
+    }
+
     // 좋아요 수 가져오기
     public Long getLikeCount(Long postId) {
+        String key = getLikeKey(postId);
+        String value = stringRedisTemplate.opsForValue().get(key);
 
-        Cache cache = cacheManager.getCache(CACHE_LIKES);
-
-        if (cache != null) {
-            Cache.ValueWrapper wrapper = cache.get(postId);
-
-            if (wrapper != null) {
-                Object value = wrapper.get();
-
-                if (value instanceof Number) {
-                    return ((Number) value).longValue();
-                }
-            }
+        // 캐시 히트
+        if (value != null) {
+            return Long.parseLong(value);
         }
 
+        // 캐시 미스
         Long dbCount = likesRepository.countByPostId(postId);
-
-        if (cache != null) {
-            cache.put(postId, dbCount);
-        }
-
+        stringRedisTemplate.opsForValue().set(key, dbCount.toString());
         return dbCount;
     }
 
     // 댓글 수 가져오기
     public Long getCommentCount(Long postId) {
+        String key = getCommentKey(postId);
+        String value = stringRedisTemplate.opsForValue().get(key);
 
-        Cache cache = cacheManager.getCache(CACHE_COMMENTS);
-
-        if (cache != null) {
-            Cache.ValueWrapper wrapper = cache.get(postId);
-
-            if (wrapper != null) {
-                Object value = wrapper.get();
-
-                if (value instanceof Number) {
-                    return ((Number) value).longValue();
-                }
-            }
+        if (value != null) {
+            return Long.parseLong(value);
         }
 
         Long dbCount = commentRepository.countByPostId(postId);
-
-        if (cache != null) {
-            cache.put(postId, dbCount);
-        }
-
+        stringRedisTemplate.opsForValue().set(key, dbCount.toString());
         return dbCount;
     }
 
-    public void clearCommentCount(Long postId) {
-        Cache cache = cacheManager.getCache("postComments");
-        if (cache != null) {
-            cache.evict(postId); // 해당 게시물의 댓글 수 캐시 삭제
-        }
+    /**
+     * redis 좋아요, 댓글 개수 증감
+     */
+    public void incrementLikeCount(Long postId) {
+        stringRedisTemplate.opsForValue().increment(getLikeKey(postId));
+    }
+    public void decrementLikeCount(Long postId) {
+        stringRedisTemplate.opsForValue().decrement(getLikeKey(postId));
+    }
+    public void incrementCommentCount(Long postId) {
+        stringRedisTemplate.opsForValue().increment(getCommentKey(postId));
+    }
+    public void decrementCommentCount(Long postId) {
+        stringRedisTemplate.opsForValue().decrement(getCommentKey(postId));
     }
 
-    // 좋아요 점수 올리기 (+1)
+    /**
+     * 랭킹 관련 점수 증감
+     */
     public void incrementLikeRanking(Long postId) {
         // ZSet에 해당 postId의 점수를 1 증가시킴 (없으면 자동 생성)
         redisTemplate.opsForZSet().incrementScore(RANKING_KEY, postId.toString(), 1);
     }
-
-    // 좋아요 점수 내리기 (-1)
     public void decrementLikeRanking(Long postId) {
         redisTemplate.opsForZSet().incrementScore(RANKING_KEY, postId.toString(), -1);
     }
@@ -141,7 +165,6 @@ public class PostRedisService {
         if (posts == null || posts.isEmpty()) {
             return;
         }
-
         for (Post post : posts) {
             redisTemplate.opsForZSet().add(RANKING_KEY, post.getId().toString(), 0.0);
         }
