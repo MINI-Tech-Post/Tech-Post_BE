@@ -39,7 +39,6 @@ public class CommentService {
     private final PostRedisService postRedisService;
 
     @Transactional
-    @CacheEvict(value = "postComments", key = "#postId")
     public void createComment(CommentRequestDTO commentRequestDTO, CustomUserDetails userDetails, Long postId){
 
         Post post = postRepository.findById(postId)
@@ -55,6 +54,8 @@ public class CommentService {
                 .build();
 
         commentRepository.save(comment);
+        // 게시글 표시용
+        postRedisService.incrementCommentCount(postId);
     }
 
     @Transactional(readOnly = true)
@@ -106,8 +107,7 @@ public class CommentService {
         Long postId = comment.getPost().getId();
 
         commentRepository.delete(comment);
-
-        // 캐시 삭제 메서드 호출 (수동 Evict)
-        postRedisService.clearCommentCount(postId);
+        // 게시글 표시용
+        postRedisService.decrementCommentCount(postId);
     }
 }
