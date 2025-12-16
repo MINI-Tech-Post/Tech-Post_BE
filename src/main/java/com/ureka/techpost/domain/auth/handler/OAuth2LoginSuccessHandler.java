@@ -45,7 +45,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         
         // 액세스 토큰을 쿼리 파라미터에 담아 프론트엔드 URL로 리다이렉트
 		// vue.js 에서 지원하는 포트 번호로 변경해야 함
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/post/list")
+        String targetUrl = UriComponentsBuilder.fromUriString("https://d3dxcbhov53prb.cloudfront.net/post/list")
                 .queryParam("accessToken", access)
                 .build().toUriString();
                 
